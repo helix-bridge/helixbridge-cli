@@ -1,0 +1,49 @@
+{
+  "indexer": "https://apollo.helixbridge.app/graphql",
+  "relayGasLimit": 600000,
+  "rpcnodes": [
+    {
+      "name": "arbitrum",
+      "rpc": "https://arb1.arbitrum.io/rpc",
+      "fixedGasPrice": 10
+    },
+    {
+      "name": "polygon",
+      "rpc": "https://polygon-rpc.com"
+    }
+  ],
+  "bridges": [
+    {
+      "direction": "arbitrum->polygon",
+      "feeLimit": 100,
+      "reorgThreshold": 10,
+      "bridgeType": "lnv3",
+      "safeWalletAddress": "0x000000000Bb6a011dB294ce3F3423f00EAc4959e",
+      "safeWalletUrl": "https://safe-transaction-polygon.safe.global/api",
+      "safeWalletRole": "signer",
+      "tokens": [
+        {
+          "symbol": "usdt->usdt",
+          "swapRate": 2300,
+          "withdrawLiquidityCountThreshold": 10
+        }
+      ]
+    },
+    {
+      "direction": "polygon->arbitrum",
+      "feeLimit": 150,
+      "reorgThreshold": 20,
+      "bridgeType": "lnv3",
+      "safeWalletAddress": "0x000000000Bb6a011dB294ce3F3423f00EAc4959e",
+      "safeWalletUrl": "https://safe-transaction-arbitrum.safe.global/api",
+      "safeWalletRole": "signer",
+      "tokens": [
+        {
+          "symbol": "usdt->usdt",
+          "swapRate": 2300,
+          "withdrawLiquidityCountThreshold": 10
+        }
+      ]
+    }
+  ]
+}

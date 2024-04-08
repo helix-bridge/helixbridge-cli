@@ -1,0 +1,83 @@
+
+registers:
+  - bridge: arbitrum-sepolia->sepolia
+    symbol: usdc
+    type: lnv3
+    contract: '0x38627Cb033De66a1E07e73f5D0a7a7adFB6741fa'
+    sourceTokenAddress: '0x8a87497488073307e1a17e8a12475a94afcb413f'
+    targetTokenAddress: '0x0ac58df0cc3542bec4cda71b16d06c3ccc39f405'
+    baseFee: 10
+    liquidityFeeRate: 0.1
+    transferLimit: 1000
+    deposit: 1000
+    approve: 10000000000000
+
+  - bridge: sepolia->arbitrum-sepolia
+    symbol: usdc
+    type: lnv3
+    contract: '0x38627Cb033De66a1E07e73f5D0a7a7adFB6741fa'
+    sourceTokenAddress: '0x0ac58df0cc3542bec4cda71b16d06c3ccc39f405'
+    targetTokenAddress: '0x8a87497488073307e1a17e8a12475a94afcb413f'
+    baseFee: 10
+    liquidityFeeRate: 0.1
+    transferLimit: 100000
+    deposit: 1000
+    approve: 10000000000000
+#    safeWalletAddress: '0x086962e147c82C037872fa87523faa139D38ee61'
+#    sourceSafeWalletUrl: 'https://safe-transaction-sepolia.safe.global/api'
+
+  - bridge: arbitrum-sepolia->sepolia
+    symbol: usdc
+    type: lnv2-opposite
+    contract: '0xbA96d83E2A04c4E50F2D6D7eCA03D70bA2426e5f'
+    sourceTokenAddress: '0x8a87497488073307e1a17e8a12475a94afcb413f'
+    targetTokenAddress: '0x0ac58df0cc3542bec4cda71b16d06c3ccc39f405'
+    baseFee: 10
+    liquidityFeeRate: 0.1
+    deposit: 1000
+    approve: 10000000000000
+
+  - bridge: sepolia->arbitrum-sepolia
+    symbol: usdc
+    type: lnv2-default
+    contract: '0x8429D7Dfd91D6F970ba89fFC005e67D15f1E4739'
+    sourceTokenAddress: '0x0ac58df0cc3542bec4cda71b16d06c3ccc39f405'
+    targetTokenAddress: '0x8a87497488073307e1a17e8a12475a94afcb413f'
+    baseFee: 10
+    liquidityFeeRate: 0.1
+    deposit: 1000
+    approve: 10000000000000
+#    safeWalletAddress: '0x086962e147c82C037872fa87523faa139D38ee61'
+#    sourceSafeWalletUrl: 'https://safe-transaction-sepolia.safe.global/api'
+#    targetSafeWalletUrl: 'https://safe-transaction-arbitrum-sepolia.safe.global/api'
+
+
+configure:
+  indexer: https://apollo.helixbridge.app/graphql
+  relayGasLimit: 600000
+  rpcnodes:
+    - name: sepolia
+      fixedGasPrice: 10
+  bridges:
+    - direction: arbitrum-sepolia->sepolia
+      feeLimit: 100
+      reorgThreshold: 10
+      bridgeType: lnv3
+      safeWalletAddress: '0x086962e147c82C037872fa87523faa139D38ee61'
+      safeWalletUrl: 'https://safe-transaction-sepolia.safe.global/api'
+      encryptedPrivateKey: aabbccddee
+      tokens:
+        - symbol: usdc->usdc
+          swapRate: 2000
+          withdrawLiquidityCountThreshold: 10
+
+    - direction: sepolia->arbitrum-sepolia
+      feeLimit: 100
+      reorgThreshold: 10
+      bridgeType: lnv3
+      tokens:
+        - symbol: usdc->usdc
+          swapRate: 2300
+          withdrawLiquidityCountThreshold: 10
+
+
