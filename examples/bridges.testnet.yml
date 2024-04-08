@@ -7,7 +7,7 @@ registers:
     sourceTokenAddress: '0x8a87497488073307e1a17e8a12475a94afcb413f'
     targetTokenAddress: '0x0ac58df0cc3542bec4cda71b16d06c3ccc39f405'
     baseFee: 10
-    liquidityFeeRate: 0.1
+    liquidityFeeRate: 0.2
     transferLimit: 1000
     deposit: 1000
     approve: 10000000000000
