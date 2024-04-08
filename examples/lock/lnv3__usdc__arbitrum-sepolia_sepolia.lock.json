@@ -1,0 +1,19 @@
+{
+  "register": {
+    "bridge": "arbitrum-sepolia->sepolia",
+    "symbol": "usdc",
+    "type": "lnv3",
+    "contract": "0x38627Cb033De66a1E07e73f5D0a7a7adFB6741fa",
+    "sourceTokenAddress": "0x8a87497488073307e1a17e8a12475a94afcb413f",
+    "targetTokenAddress": "0x0ac58df0cc3542bec4cda71b16d06c3ccc39f405",
+    "baseFee": 10,
+    "liquidityFeeRate": 0.2,
+    "transferLimit": 1000,
+    "deposit": 1000,
+    "approve": 10000000000000
+  },
+  "hash": {
+    "origin": "1000000000000010arbitrum-sepolia->sepolia0x38627Cb033De66a1E07e73f5D0a7a7adFB6741fa10000.20x8a87497488073307e1a17e8a12475a94afcb413fusdc0x0ac58df0cc3542bec4cda71b16d06c3ccc39f4051000lnv3",
+    "hash": "226178d89610549d11f32cee0542f2cb1cf71f2ea193099188392ca7b7ef0f59"
+  }
+}
