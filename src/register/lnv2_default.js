@@ -10,15 +10,15 @@ export async function register(options) {
   const sourceTokenDecimal = BigInt(_sourceTokenDecimal);
   const targetTokenDecimal = BigInt(_targetTokenDecimal);
 
-  const approvalTargetChain = BigInt(register.approve) * (10n ** targetTokenDecimal);
+  const approveTargetChain = BigInt(register.approve) * (10n ** targetTokenDecimal);
   const baseFee = BigInt(register.baseFee) * (10n ** sourceTokenDecimal);
   const liquidityFeeRate = Number(register.liquidityFeeRate) * (10 ** 3);
   const deposit = BigInt(register.deposit) * (10n ** targetTokenDecimal);
 
-  const approvalFlags = [
+  const approveFlags = [
     'approve(address,uint256)(bool)',
     register.contract,
-    approvalTargetChain,
+    approveTargetChain,
   ];
   const depositFlags = [
     'depositProviderMargin(uint256,address,address,uint256)()',
@@ -37,7 +37,7 @@ export async function register(options) {
   ];
 
   const callOptions = {
-    approvalFlags,
+    approveFlags,
     depositFlags,
     setFeeFlags,
   };
@@ -53,30 +53,40 @@ export async function register(options) {
 
 async function registerWithCall(options, callOptions) {
   const {register, lifecycle, signer} = options;
-  const {approvalFlags, depositFlags, setFeeFlags} = callOptions;
+  const {approveFlags, depositFlags, setFeeFlags} = callOptions;
   const sourceSendFlags = [
     `--rpc-url=${lifecycle.sourceChainRpc}`,
-    `--private-key=${signer}`
   ];
   const targetSendFlags = [
     `--rpc-url=${lifecycle.targetChainRpc}`,
-    `--private-key=${signer}`
   ];
 
-  await $`echo cast send ${approvalFlags}`;
-  approvalFlags.unshift(...targetSendFlags);
-  approvalFlags.unshift(register.targetTokenAddress);
-  const txApproval = await $`echo cast send ${approvalFlags}`.quiet();
+  approveFlags.unshift(...[
+    ...targetSendFlags,
+    register.targetTokenAddress,
+  ]);
+  await $`echo cast send ${approveFlags}`;
+  approveFlags.unshift(`--private-key=${signer}`);
+  const txApprove = await $`cast send ${approveFlags}`.quiet();
+  console.log(txApprove.stdout);
 
+  depositFlags.unshift(...[
+    ...targetSendFlags,
+    register.contract,
+  ]);
   await $`echo cast send ${depositFlags}`;
-  depositFlags.unshift(...targetSendFlags);
-  depositFlags.unshift(register.contract);
-  const txDeposit = await $`echo cast send ${depositFlags}`;
+  depositFlags.unshift(`--private-key=${signer}`);
+  const txDeposit = await $`cast send ${depositFlags}`;
+  console.log(txDeposit.stdout);
 
+  setFeeFlags.unshift(...[
+    ...sourceSendFlags,
+    register.contract,
+  ]);
   await $`echo cast send ${setFeeFlags}`;
-  setFeeFlags.unshift(...sourceSendFlags);
-  setFeeFlags.unshift(register.contract);
-  const txsetFee = await $`echo cast send ${setFeeFlags}`.quiet();
+  setFeeFlags.unshift(`--private-key=${signer}`);
+  const txSetFee = await $`cast send ${setFeeFlags}`.quiet();
+  console.log(txSetFee.stdout);
 }
 
 async function registerWithSafe(options, callOptions) {
@@ -85,9 +95,9 @@ async function registerWithSafe(options, callOptions) {
     sourceSafeSdk, sourceSafeService, sourceSigner,
     targetSafeSdk, targetSafeService, targetSigner,
   } = options;
-  const {approvalFlags, depositFlags, setFeeFlags} = callOptions;
+  const {approveFlags, depositFlags, setFeeFlags} = callOptions;
 
-  const txApproval = await $`cast calldata ${approvalFlags}`;
+  const txApprove = await $`cast calldata ${approveFlags}`;
   const txDeposit = await $`cast calldata ${depositFlags}`;
   const txSetFee = await $`cast calldata ${setFeeFlags}`;
 
@@ -98,9 +108,9 @@ async function registerWithSafe(options, callOptions) {
     senderAddress: targetSigner.address,
     transactions: [
       {
-        to: register.contract,
+        to: register.targetTokenAddress,
         value: '0',
-        data: txApproval.stdout.trim(),
+        data: txApprove.stdout.trim(),
       },
       {
         to: register.contract,
@@ -110,7 +120,7 @@ async function registerWithSafe(options, callOptions) {
     ],
   });
   console.log(
-    chalk.green('proposed register transaction to'),
+    chalk.green('proposed deposit transaction to'),
     `${lifecycle.targetChainName}: ${register.safeWalletAddress} (safe)`
   );
   if (p0 && arg.isDebug()) {

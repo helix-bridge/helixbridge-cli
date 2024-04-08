@@ -9,6 +9,14 @@ export async function register(options) {
   const baseFee = BigInt(register.baseFee) * (10n ** sourceTokenDecimal);
   const liquidityFeeRate = Number(register.liquidityFeeRate) * (10 ** 3);
   const transferLimit = BigInt(register.transferLimit) * (10n ** sourceTokenDecimal);
+  const approve = BigInt(register.approve) * (10n ** sourceTokenDecimal);
+
+
+  const approvalFlags = [
+    'approve(address,uint256)(bool)',
+    register.contract,
+    approve,
+  ];
   const setFeeFlags = [
     'registerLnProvider(uint256,address,address,uint112,uint16,uint112)()',
     register.targetChainId,
@@ -24,10 +32,7 @@ export async function register(options) {
     BigInt(register.deposit) * (10n ** sourceTokenDecimal),
   ];
   const callOptions = {
-    decimals: sourceTokenDecimal,
-    baseFee,
-    transferLimit,
-    liquidityFeeRate,
+    approvalFlags,
     setFeeFlags,
     depositFlags,
   };
@@ -44,28 +49,45 @@ export async function register(options) {
 
 async function registerWithCall(options, callOptions) {
   const {register, lifecycle, signer} = options;
-  const {depositFlags, setFeeFlags} = callOptions;
+  const {approvalFlags, depositFlags, setFeeFlags} = callOptions;
   const sendFlags = [
-    register.contract,
     `--rpc-url=${lifecycle.sourceChainRpc}`,
-    `--private-key=${signer}`
   ];
 
+  approvalFlags.unshift(...[
+    ...sendFlags,
+    register.sourceTokenAddress,
+  ]);
+  await $`echo cast send ${approvalFlags}`;
+  approvalFlags.unshift(`--private-key=${signer}`);
+  const txApprove = await $`cast send ${approvalFlags}`.quiet();
+  console.log(txApprove.stdout);
+
+  setFeeFlags.unshift(...[
+    ...sendFlags,
+    register.contract,
+  ]);
   await $`echo cast send ${setFeeFlags}`;
-  setFeeFlags.unshift(...sendFlags);
-  const txSetFee = await $`echo cast send ${setFeeFlags}`.quiet();
+  setFeeFlags.unshift(`--private-key=${signer}`);
+  const txSetFee = await $`cast send ${setFeeFlags}`.quiet();
+  console.log(txSetFee.stdout);
 
-
+  depositFlags.unshift(...[
+    ...sendFlags,
+    register.contract,
+  ]);
   await $`echo cast send ${depositFlags}`
-  depositFlags.unshift(...sendFlags);
-  const txDeposit = await $`echo cast send ${depositFlags}`.quiet();
+  depositFlags.unshift(`--private-key=${signer}`);
+  const txDeposit = await $`cast send ${depositFlags}`.quiet();
+  console.log(txDeposit.stdout);
 }
 
 
 async function registerWithSafe(options, callOptions) {
   const {register, lifecycle, sourceSafeSdk, sourceSafeService, sourceSigner} = options;
-  const {depositFlags, setFeeFlags} = callOptions;
+  const {approvalFlags, depositFlags, setFeeFlags} = callOptions;
 
+  const txApprove = await $`cast calldata ${approvalFlags}`;
   const txSetFee = await $`cast calldata ${setFeeFlags}`;
   const txDeposit = await $`cast calldata ${depositFlags}`;
 
@@ -75,6 +97,11 @@ async function registerWithSafe(options, callOptions) {
     safeAddress: register.safeWalletAddress,
     senderAddress: sourceSigner.address,
     transactions: [
+      {
+        to: register.sourceTokenAddress,
+        value: '0',
+        data: txApprove.stdout.trim(),
+      },
       {
         to: register.contract,
         value: '0',
