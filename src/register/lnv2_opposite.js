@@ -4,6 +4,7 @@ import * as arg from "../ecosys/arg.js";
 export async function register(options) {
   const {register, lifecycle} = options;
 
+  const targetChainId = await $`cast chain-id --rpc-url=${lifecycle.targetChainRpc}`;
   const _sourceTokenDecimal = await $`cast call --rpc-url=${lifecycle.sourceChainRpc} ${register.sourceTokenAddress} 'decimals()()'`;
   const sourceTokenDecimal = BigInt(_sourceTokenDecimal);
 
@@ -19,7 +20,7 @@ export async function register(options) {
   ];
   const setFeeFlags = [
     'updateProviderFeeAndMargin(uint256,address,address,uint112,uint112,uint16)()',
-    register.targetChainId,
+    targetChainId.stdout.trim(),
     register.sourceTokenAddress,
     register.targetTokenAddress,
     deposit,

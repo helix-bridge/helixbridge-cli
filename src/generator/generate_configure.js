@@ -50,7 +50,10 @@ async function generateWithGroup(options, group) {
 
   const outputJson = JSON.stringify(configure, null, 2);
   await fs.writeFile(storeFile, outputJson);
+  console.log(storeFile);
+  console.log('---------');
   console.log(outputJson);
+  console.log('');
 }
 
 

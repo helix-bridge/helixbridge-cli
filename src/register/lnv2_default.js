@@ -5,6 +5,7 @@ export async function register(options) {
   const {register, lifecycle} = options;
 
   const sourceChainId = await $`cast chain-id --rpc-url=${lifecycle.sourceChainRpc}`;
+  const targetChainId = await $`cast chain-id --rpc-url=${lifecycle.targetChainRpc}`;
   const _sourceTokenDecimal = await $`cast call --rpc-url=${lifecycle.sourceChainRpc} ${register.sourceTokenAddress} 'decimals()()'`;
   const _targetTokenDecimal = await $`cast call --rpc-url=${lifecycle.targetChainRpc} ${register.targetTokenAddress} 'decimals()()'`;
   const sourceTokenDecimal = BigInt(_sourceTokenDecimal);
@@ -29,7 +30,7 @@ export async function register(options) {
   ];
   const setFeeFlags = [
     'setProviderFee(uint256,address,address,uint112,uint8)()',
-    register.targetChainId,
+    targetChainId.stdout.trim(),
     register.sourceTokenAddress,
     register.targetTokenAddress,
     baseFee,
