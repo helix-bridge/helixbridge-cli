@@ -6,11 +6,6 @@ import * as lnv2Opposite from './lnv2_opposite.js'
 
 
 export async function check() {
-  const environments = arg.programArguments();
-  if (!environments || !environments.length) {
-    console.log(chalk.red('missing network [mainnet|testnet]'));
-    process.exit(1);
-  }
   const datadir = arg.datadir();
   if (!datadir) {
     console.log(chalk.red('missing datadir, please add --datadir=/path/to/data or -d=/path/to/data'));
@@ -36,20 +31,15 @@ export async function check() {
 
 
 export async function register(options) {
-  await init(options);
-
-  const enableMainnet = arg.option('mainnet');
-  const enableTestnet = arg.option('testnet');
-  if (!enableMainnet && !enableTestnet) {
-    console.log(chalk.red('missing product mode, please add --mainnet or --testnet'));
+  const groups = arg.options('group');
+  if (!groups || !groups.length) {
+    console.log(chalk.red('missing group, please add --group'));
     process.exit(1);
   }
+  await init(options);
 
-  if (enableMainnet) {
-    await registerWithType(options, 'mainnet');
-  }
-  if (enableTestnet) {
-    await registerWithType(options, 'testnet');
+  for (const group of groups) {
+    await registerWithGroup(options, group);
   }
 }
 
@@ -59,8 +49,8 @@ async function init(options) {
 }
 
 
-async function registerWithType(options, type) {
-  const bridgeConfigRaw = await fs.readFile(arg.datapath(`/bridges.${type}.yml`), 'utf8');
+async function registerWithGroup(options, group) {
+  const bridgeConfigRaw = await fs.readFile(arg.datapath(`/bridges.${group}.yml`), 'utf8');
   const bridgeConfig = YAML.parse(bridgeConfigRaw);
   const registers = bridgeConfig.registers;
 
@@ -142,7 +132,7 @@ async function ensureLock(options, write = false) {
   const LOCK_PATH = arg.datapath('/lock');
   const lockName = `${LOCK_PATH}/${irn}.lock.json`;
   if (write) {
-    await $`mkdir -p ${LOCK_PATH}`;
+    await $`mkdir -p ${LOCK_PATH}`.quiet();
     const outputJson = JSON.stringify(options, null, 2);
     await fs.writeFile(lockName, outputJson);
     console.log(`write lock: ${lockName}`);
