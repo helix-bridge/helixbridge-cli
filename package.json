@@ -6,9 +6,6 @@
   "author": "",
   "license": "ISC",
   "type": "module",
-  "scripts": {
-    "build": "shx rm -rf dist && tsc -b"
-  },
   "dependencies": {
     "@safe-global/api-kit": "^2.2.0",
     "@safe-global/protocol-kit": "^3.0.1",
@@ -16,6 +13,6 @@
   },
   "devDependencies": {
     "@safe-global/safe-core-sdk-types": "^4.0.1",
-    "shx": "^0.3"
+    "zx": "^8.0.1"
   }
 }
