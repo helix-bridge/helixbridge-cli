@@ -8,7 +8,7 @@ export async function register(options) {
   const targetChainId = await $`cast chain-id --rpc-url=${lifecycle.targetChainRpc}`;
   const _sourceTokenDecimal = await $`cast call --rpc-url=${lifecycle.sourceChainRpc} ${register.sourceTokenAddress} 'decimals()()'`;
   const sourceTokenDecimal = BigInt(_sourceTokenDecimal);
-  const baseFee = BigInt(register.baseFee) * (10n ** sourceTokenDecimal);
+  const baseFee = tool.floatToBigInt(register.baseFee, sourceTokenDecimal);
   const liquidityFeeRate = Number(register.liquidityFeeRate) * (10 ** 3);
   const transferLimit = BigInt(register.transferLimit) * (10n ** sourceTokenDecimal);
   const approve = BigInt(register.approve) * (10n ** sourceTokenDecimal);

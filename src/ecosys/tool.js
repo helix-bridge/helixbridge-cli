@@ -2,6 +2,17 @@ export function absBigInt(n) {
   return (n < 0n) ? -n : n
 }
 
+export function floatToBigInt(value, decimal) {
+  const _v = Number(value);
+  const isFloat = _v % 1 !== 0;
+  let fixedValue = isFloat
+    ? Number(value.toFixed(2)) * (10 ** 2)
+    : _v;
+  return isFloat
+    ? fixedValue * (10n ** (decimal - 2n))
+    : fixedValue * (10n ** decimal);
+}
+
 export function pickIndexEndpoint(options, chainName) {
   const {definition} = options;
   const indexerDefinition = definition.indexer;
