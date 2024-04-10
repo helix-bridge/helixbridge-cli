@@ -5,6 +5,8 @@ FROM node:21-alpine
 COPY --from=foundry /usr/local/bin/cast /usr/local/bin/
 
 COPY . /app
-RUN cd /app && yarn install
+RUN npm config set update-notifier false \
+    && cd /app \
+    && yarn install
 
 ENTRYPOINT ["/app/scripts/helixbridge.sh"]
