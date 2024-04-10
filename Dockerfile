@@ -2,6 +2,6 @@ FROM node:20-alpine
 
 COPY . /app
 
-RUN yarn install
+RUN cd /app && yarn install
 
 ENTRYPOINT ["/app/scripts/helixbridge.sh"]
