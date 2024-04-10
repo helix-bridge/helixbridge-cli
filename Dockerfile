@@ -4,4 +4,4 @@ COPY . /app
 
 RUN yarn install
 
-CMD ["npx", "zx", "/app/src/index.mjs"]
+ENDPOINT ["/app/scripts/helixbridge.sh"]
