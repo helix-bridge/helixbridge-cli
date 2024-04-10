@@ -19,16 +19,10 @@ export async function generate(options) {
     console.log(chalk.red('missing group, please add --group'));
     process.exit(1);
   }
-  await init(options);
 
   for (const group of groups) {
     await generateWithGroup(options, group);
   }
-}
-
-async function init(options) {
-  const defYmlRaw = await fs.readFile(arg.datapath('/definition.yml'), 'utf8');
-  options.definition = YAML.parse(defYmlRaw);
 }
 
 async function generateWithGroup(options, group) {
