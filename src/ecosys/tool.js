@@ -6,7 +6,7 @@ export function floatToBigInt(value, decimal) {
   const _v = Number(value);
   const isFloat = _v % 1 !== 0;
   let fixedValue = isFloat
-    ? Number(value.toFixed(2)) * (10 ** 2)
+    ? BigInt(Number(value.toFixed(2)) * (10 ** 2))
     : _v;
   return isFloat
     ? fixedValue * (10n ** (decimal - 2n))
