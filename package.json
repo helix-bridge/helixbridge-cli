@@ -12,7 +12,6 @@
     "ethers": "^6.11.1"
   },
   "devDependencies": {
-    "@safe-global/safe-core-sdk-types": "^4.0.1",
-    "zx": "^8.0.1"
+    "@safe-global/safe-core-sdk-types": "^4.0.1"
   }
 }

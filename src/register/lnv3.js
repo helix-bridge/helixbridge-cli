@@ -76,20 +76,23 @@ export async function register(options) {
 
 
 async function registerWithCall(options, callOptions) {
-  const {register, lifecycle, signer} = options;
+  const {register, lifecycle, definition, signer} = options;
   const {approvalFlags, depositFlags, setFeeFlags, withdrawFlags} = callOptions;
   const sendFlags = [
     `--rpc-url=${lifecycle.sourceChainRpc}`,
   ];
 
-  approvalFlags.unshift(...[
-    ...sendFlags,
-    register.sourceTokenAddress,
-  ]);
-  await $`echo cast send ${approvalFlags}`;
-  approvalFlags.unshift(`--private-key=${signer}`);
-  const txApprove = await $`cast send ${approvalFlags}`.quiet();
-  console.log(txApprove.stdout);
+  const featureApprove = definition.features.approve;
+  if (featureApprove.disable.indexOf(register.symbol) === -1) {
+    approvalFlags.unshift(...[
+      ...sendFlags,
+      register.sourceTokenAddress,
+    ]);
+    await $`echo cast send ${approvalFlags}`;
+    approvalFlags.unshift(`--private-key=${signer}`);
+    const txApprove = await $`cast send ${approvalFlags}`.quiet();
+    console.log(txApprove.stdout);
+  }
 
   setFeeFlags.unshift(...[
     ...sendFlags,
@@ -124,24 +127,27 @@ async function registerWithCall(options, callOptions) {
 
 
 async function registerWithSafe(options, callOptions) {
-  const {register, lifecycle, sourceSafeSdk, sourceSafeService, sourceSigner} = options;
+  const {register, lifecycle, definition, sourceSafeSdk, sourceSafeService, sourceSigner} = options;
   const {approvalFlags, depositFlags, setFeeFlags, withdrawFlags} = callOptions;
 
   const txApprove = await $`cast calldata ${approvalFlags}`;
   const txSetFee = await $`cast calldata ${setFeeFlags}`;
+  const featureApprove = definition.features.approve;
 
-  const transactions = [
-    {
+  const transactions =[];
+  if (featureApprove.disable.indexOf(register.symbol) === -1) {
+    transactions.push({
       to: register.sourceTokenAddress,
       value: '0',
       data: txApprove.stdout.trim(),
-    },
-    {
-      to: register.contract,
-      value: '0',
-      data: txSetFee.stdout.trim(),
-    },
-  ];
+    });
+  }
+
+  transactions.push({
+    to: register.contract,
+    value: '0',
+    data: txSetFee.stdout.trim(),
+  });
   if (depositFlags.length) {
     const txDeposit = await $`cast calldata ${depositFlags}`;
     transactions.push({

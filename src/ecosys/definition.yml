@@ -26,3 +26,20 @@ indexer:
       - pangolin
       - sepolia
       - arbitrum-sepolia
+
+decimal:
+  ring:
+    generic: 18
+  usdc:
+    generic: 6
+    sepolia: 18
+    arbitrum-sepolia: 18
+  usdt:
+    generic: 6
+    sepolia: 18
+    arbitrum-sepolia: 18
+
+features:
+  approve:
+    disable:
+      - ring

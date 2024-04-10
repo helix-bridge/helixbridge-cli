@@ -3,7 +3,7 @@ import * as arg from "../ecosys/arg.js";
 import * as tool from '../ecosys/tool.js';
 
 export async function register(options) {
-  const {register, lifecycle} = options;
+  const {register, lifecycle, definition} = options;
 
   const _sourceChainId = await $`cast chain-id --rpc-url=${lifecycle.sourceChainRpc}`;
   const _targetChainId = await $`cast chain-id --rpc-url=${lifecycle.targetChainRpc}`;
@@ -11,8 +11,18 @@ export async function register(options) {
   const _targetTokenDecimal = await $`cast call --rpc-url=${lifecycle.targetChainRpc} ${register.targetTokenAddress} 'decimals()()'`;
   const sourceChainId = _sourceChainId.stdout.trim();
   const targetChainId = _targetChainId.stdout.trim();
-  const sourceTokenDecimal = BigInt(_sourceTokenDecimal);
-  const targetTokenDecimal = BigInt(_targetTokenDecimal);
+  const sourceTokenDecimal = tool.pickDecimal({
+    definition,
+    decimal: _sourceTokenDecimal.stdout.trim(),
+    chain: lifecycle.sourceChainName,
+    symbol: register.symbol,
+  });
+  const targetTokenDecimal = tool.pickDecimal({
+    definition,
+    decimal: _targetTokenDecimal.stdout.trim(),
+    chain: lifecycle.targetChainName,
+    symbol: register.symbol,
+  });
 
   const approveTargetChain = BigInt(register.approve) * (10n ** targetTokenDecimal);
   const baseFee = tool.floatToBigInt(register.baseFee, sourceTokenDecimal);
@@ -84,7 +94,7 @@ export async function register(options) {
 }
 
 async function registerWithCall(options, callOptions) {
-  const {register, lifecycle, signer} = options;
+  const {register, lifecycle, definition, signer} = options;
   const {approveFlags, depositFlags, setFeeFlags, withdrawFlags} = callOptions;
   const sourceSendFlags = [
     `--rpc-url=${lifecycle.sourceChainRpc}`,
@@ -92,15 +102,18 @@ async function registerWithCall(options, callOptions) {
   const targetSendFlags = [
     `--rpc-url=${lifecycle.targetChainRpc}`,
   ];
+  const featureApprove = definition.features.approve;
 
-  approveFlags.unshift(...[
-    ...targetSendFlags,
-    register.targetTokenAddress,
-  ]);
-  await $`echo cast send ${approveFlags}`;
-  approveFlags.unshift(`--private-key=${signer}`);
-  const txApprove = await $`cast send ${approveFlags}`.quiet();
-  console.log(txApprove.stdout);
+  if (featureApprove.disable.indexOf(register.symbol) === -1) {
+    approveFlags.unshift(...[
+      ...targetSendFlags,
+      register.targetTokenAddress,
+    ]);
+    await $`echo cast send ${approveFlags}`;
+    approveFlags.unshift(`--private-key=${signer}`);
+    const txApprove = await $`cast send ${approveFlags}`.quiet();
+    console.log(txApprove.stdout);
+  }
 
   if (depositFlags.length) {
     depositFlags.unshift(...[
@@ -137,7 +150,7 @@ async function registerWithCall(options, callOptions) {
 
 async function registerWithSafe(options, callOptions) {
   const {
-    register, lifecycle,
+    register, lifecycle, definition,
     sourceSafeSdk, sourceSafeService, sourceSigner,
     targetSafeSdk, targetSafeService, targetSigner,
   } = options;
@@ -146,13 +159,16 @@ async function registerWithSafe(options, callOptions) {
   const txApprove = await $`cast calldata ${approveFlags}`;
   const txSetFee = await $`cast calldata ${setFeeFlags}`;
 
-  const p0Transactions = [
-    {
+  const featureApprove = definition.features.approve;
+
+  const p0Transactions = [];
+  if (featureApprove.disable.indexOf(register.symbol) === -1) {
+    p0Transactions.push({
       to: register.targetTokenAddress,
       value: '0',
       data: txApprove.stdout.trim(),
-    },
-  ];
+    });
+  }
   if (depositFlags.length) {
     const txDeposit = await $`cast calldata ${depositFlags}`;
     p0Transactions.push({
@@ -162,19 +178,21 @@ async function registerWithSafe(options, callOptions) {
     });
   }
 
-  const p0 = await safe.propose({
-    safeSdk: targetSafeSdk,
-    safeService: targetSafeService,
-    safeAddress: register.safeWalletAddress,
-    senderAddress: targetSigner.address,
-    transactions: p0Transactions,
-  });
-  console.log(
-    chalk.green('proposed deposit transaction to'),
-    `${lifecycle.targetChainName}: ${register.safeWalletAddress} (safe)`
-  );
-  if (p0 && arg.isDebug()) {
-    console.log(p0);
+  if (p0Transactions.length) {
+    const p0 = await safe.propose({
+      safeSdk: targetSafeSdk,
+      safeService: targetSafeService,
+      safeAddress: register.safeWalletAddress,
+      senderAddress: targetSigner.address,
+      transactions: p0Transactions,
+    });
+    console.log(
+      chalk.green('proposed deposit transaction to'),
+      `${lifecycle.targetChainName}: ${register.safeWalletAddress} (safe)`
+    );
+    if (p0 && arg.isDebug()) {
+      console.log(p0);
+    }
   }
 
   const p1Transactions = [

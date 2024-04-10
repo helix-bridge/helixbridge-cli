@@ -88,7 +88,6 @@ async function handle(options) {
     relayerAddress,
   };
 
-  await safe.init(options);
   const hash = await hashRegister(register);
   const ensureLockOptions = {
     register,
@@ -99,6 +98,7 @@ async function handle(options) {
     return;
   }
 
+  await safe.init(options);
   switch (register.type) {
     case 'lnv3':
       await lnv3.register(options);

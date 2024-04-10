@@ -3,12 +3,17 @@ import * as arg from "../ecosys/arg.js";
 import * as tool from "../ecosys/tool.js";
 
 export async function register(options) {
-  const {register, lifecycle} = options;
+  const {register, lifecycle, definition} = options;
 
   const _targetChainId = await $`cast chain-id --rpc-url=${lifecycle.targetChainRpc}`;
   const targetChainId = _targetChainId.stdout.trim();
   const _sourceTokenDecimal = await $`cast call --rpc-url=${lifecycle.sourceChainRpc} ${register.sourceTokenAddress} 'decimals()()'`;
-  const sourceTokenDecimal = BigInt(_sourceTokenDecimal);
+  const sourceTokenDecimal = tool.pickDecimal({
+    definition,
+    decimal: _sourceTokenDecimal.stdout.trim(),
+    chain: lifecycle.sourceChainName,
+    symbol: register.symbol,
+  });
 
   const approve = BigInt(register.approve) * (10n ** sourceTokenDecimal);
   const baseFee = tool.floatToBigInt(register.baseFee, sourceTokenDecimal);
@@ -68,7 +73,7 @@ export async function register(options) {
 
 
 async function registerWithCall(options, callOptions) {
-  const {register, lifecycle, signer} = options;
+  const {register, lifecycle, definition, signer} = options;
   const {approveFlags, setFeeFlags, withdrawFlags} = callOptions;
   const sourceSendFlags = [
     `--rpc-url=${lifecycle.sourceChainRpc}`,
@@ -77,14 +82,17 @@ async function registerWithCall(options, callOptions) {
     `--rpc-url=${lifecycle.targetChainRpc}`,
   ];
 
-  approveFlags.unshift(...[
-    ...targetSendFlags,
-    register.targetTokenAddress,
-  ]);
-  await $`echo cast send ${approveFlags}`;
-  approveFlags.unshift(`--private-key=${signer}`);
-  const txApprove = await $`cast send ${approveFlags}`.quiet();
-  console.log(txApprove.stdout);
+  const featureApprove = definition.features.approve;
+  if (featureApprove.disable.indexOf(register.symbol) === -1) {
+    approveFlags.unshift(...[
+      ...targetSendFlags,
+      register.targetTokenAddress,
+    ]);
+    await $`echo cast send ${approveFlags}`;
+    approveFlags.unshift(`--private-key=${signer}`);
+    const txApprove = await $`cast send ${approveFlags}`.quiet();
+    console.log(txApprove.stdout);
+  }
 
   setFeeFlags.unshift(...[
     ...sourceSendFlags,
@@ -98,7 +106,7 @@ async function registerWithCall(options, callOptions) {
 
 async function registerWithSafe(options, callOptions) {
   const {
-    register, lifecycle,
+    register, lifecycle, definition,
     sourceSafeSdk, sourceSafeService, sourceSigner,
     targetSafeSdk, targetSafeService, targetSigner,
   } = options;
@@ -107,25 +115,32 @@ async function registerWithSafe(options, callOptions) {
   const txApprove = await $`cast calldata ${approveFlags}`;
   const txSetFee = await $`cast calldata ${setFeeFlags}`;
 
-  const p0 = await safe.propose({
-    safeSdk: targetSafeSdk,
-    safeService: targetSafeService,
-    safeAddress: register.safeWalletAddress,
-    senderAddress: targetSigner.address,
-    transactions: [
-      {
-        to: register.targetTokenAddress,
-        value: '0',
-        data: txApprove.stdout.trim(),
-      },
-    ],
-  });
-  console.log(
-    chalk.green('proposed approve transaction to'),
-    `${lifecycle.targetChainName}: ${register.safeWalletAddress} (safe)`
-  );
-  if (p0 && arg.isDebug()) {
-    console.log(p0);
+  const p0Transactions = [];
+
+  const featureApprove = definition.features.approve;
+  if (featureApprove.disable.indexOf(register.symbol) === -1) {
+    p0Transactions.push({
+      to: register.targetTokenAddress,
+      value: '0',
+      data: txApprove.stdout.trim(),
+    });
+  }
+
+  if (p0Transactions.length) {
+    const p0 = await safe.propose({
+      safeSdk: targetSafeSdk,
+      safeService: targetSafeService,
+      safeAddress: register.safeWalletAddress,
+      senderAddress: targetSigner.address,
+      transactions: p0Transactions,
+    });
+    console.log(
+      chalk.green('proposed approve transaction to'),
+      `${lifecycle.targetChainName}: ${register.safeWalletAddress} (safe)`
+    );
+    if (p0 && arg.isDebug()) {
+      console.log(p0);
+    }
   }
 
   const p1 = await safe.propose({
@@ -135,15 +150,10 @@ async function registerWithSafe(options, callOptions) {
     senderAddress: sourceSigner.address,
     transactions: [
       {
-        to: register.targetTokenAddress,
-        value: '0',
-        data: txApprove.stdout.trim(),
-      },
-      {
         to: register.contract,
         value: '0',
         data: txSetFee.stdout.trim(),
-      },
+      }
     ],
   });
   console.log(

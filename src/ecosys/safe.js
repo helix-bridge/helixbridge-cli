@@ -12,6 +12,7 @@ export async function init(options) {
     const safe = await initSafe({
       register,
       chainRpc: lifecycle.sourceChainRpc,
+      safeWalletUrl: register.sourceSafeWalletUrl,
       signer,
     });
     options.sourceSafeSdk = safe.safeSdk;
@@ -24,6 +25,7 @@ export async function init(options) {
     const safe = await initSafe({
       register,
       chainRpc: lifecycle.targetChainRpc,
+      safeWalletUrl: register.targetSafeWalletUrl,
       signer,
     });
     options.targetSafeSdk = safe.safeSdk;
@@ -35,7 +37,7 @@ export async function init(options) {
 }
 
 async function initSafe(options) {
-  const {register, chainRpc, signer} = options;
+  const {register, chainRpc, signer, safeWalletUrl} = options;
   const provider = new ethers.JsonRpcProvider(chainRpc);
   const wallet = new ethers.Wallet(signer, provider);
   const ethAdapter = new EthersAdapter({
@@ -45,9 +47,10 @@ async function initSafe(options) {
   const safeSdk = await Safe.default.create({ethAdapter: ethAdapter, safeAddress: register.safeWalletAddress});
 
   const network = await provider.getNetwork();
+  console.log(`init safe for chain ${network.chainId} with ${safeWalletUrl}`);
   const safeService = new SafeApiKit.default({
     chainId: network.chainId,
-    txServiceUrl: register.safeWalletUrl,
+    txServiceUrl: safeWalletUrl,
     // txServiceUrl: 'https://httpbin.org/anything',
   });
   return {
