@@ -7,5 +7,22 @@ rpc:
   pangolin: https://pangolin-rpc.darwinia.network
   optimism: https://optimism-rpc.publicnode.com
   sepolia: https://ethereum-sepolia-rpc.publicnode.com
+#  sepolia: https://1rpc.io/sepolia
   arbitrum-sepolia: https://arbitrum-sepolia.blockpi.network/v1/rpc/public
 
+indexer:
+  mainnet:
+    endpoint: https://apollo.helixbridge.app/graphql
+    chains:
+      - ethereum
+      - arbitrum
+      - polygon
+      - darwinia
+      - crab
+      - optimism
+  testnet:
+    endpoint: https://apollo-test.helixbridge.app/graphql
+    chains:
+      - pangolin
+      - sepolia
+      - arbitrum-sepolia

@@ -36,16 +36,10 @@ export async function register(options) {
     console.log(chalk.red('missing group, please add --group'));
     process.exit(1);
   }
-  await init(options);
 
   for (const group of groups) {
     await registerWithGroup(options, group);
   }
-}
-
-async function init(options) {
-  const defYmlRaw = await fs.readFile(arg.datapath('/definition.yml'), 'utf8');
-  options.definition = YAML.parse(defYmlRaw);
 }
 
 
@@ -79,11 +73,19 @@ async function handle(options) {
     console.log(chalk.red(`unidentified chain: ${targetChainName}`));
     process.exit(1);
   }
+
+  let relayerAddress = register.safeWalletAddress;
+  if (!relayerAddress) {
+    const _walletAddress = await $`cast wallet address ${options.signer}`.quiet();
+    relayerAddress = _walletAddress.stdout.trim().toLowerCase();
+  }
+
   options.lifecycle = {
-    sourceChainName: sourceChainName,
-    targetChainName: targetChainName,
-    sourceChainRpc: sourceChainRpc,
-    targetChainRpc: targetChainRpc,
+    sourceChainName,
+    targetChainName,
+    sourceChainRpc,
+    targetChainRpc,
+    relayerAddress,
   };
 
   await safe.init(options);

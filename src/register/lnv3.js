@@ -1,5 +1,6 @@
 import * as arg from '../ecosys/arg.js'
 import * as safe from '../ecosys/safe.js'
+import * as tool from '../ecosys/tool.js'
 
 export async function register(options) {
   const {register, lifecycle} = options;
@@ -11,7 +12,37 @@ export async function register(options) {
   const liquidityFeeRate = Number(register.liquidityFeeRate) * (10 ** 3);
   const transferLimit = BigInt(register.transferLimit) * (10n ** sourceTokenDecimal);
   const approve = BigInt(register.approve) * (10n ** sourceTokenDecimal);
+  const deposit = BigInt(register.deposit) * (10n ** sourceTokenDecimal);
 
+  const encodedParamForPenaltyReserves = register.sourceTokenAddress + (lifecycle.relayerAddress.toLowerCase().replace('0x', ''));
+  const _depositedPenalty = await $`cast call \
+    --rpc-url=${lifecycle.sourceChainRpc} \
+    ${register.contract} \
+    'penaltyReserves(bytes32)(uint256)' \
+    $(cast keccak ${encodedParamForPenaltyReserves}) \
+    | cut -d ' ' -f1 \
+  `;
+
+  const depositFlags = [];
+  const withdrawFlags = [];
+  const depositedPenalty = BigInt(_depositedPenalty.stdout.trim());
+  const gapForDepositTarget = deposit - depositedPenalty;
+  if (tool.absBigInt(gapForDepositTarget) > 10n) {
+    if (gapForDepositTarget > 0n) {
+      depositFlags.push(...[
+        'depositPenaltyReserve(address,uint256)()',
+        register.sourceTokenAddress,
+        gapForDepositTarget,
+      ]);
+    } else {
+      //# not open now
+      // withdrawFlags.push(...[
+      //   'withdrawPenaltyReserve(address,uint256)()',
+      //   register.sourceTokenAddress,
+      //   -gapForDepositTarget
+      // ]);
+    }
+  }
 
   const approvalFlags = [
     'approve(address,uint256)(bool)',
@@ -27,15 +58,11 @@ export async function register(options) {
     liquidityFeeRate,
     transferLimit,
   ];
-  const depositFlags = [
-    'depositPenaltyReserve(address,uint256)()',
-    register.sourceTokenAddress,
-    BigInt(register.deposit) * (10n ** sourceTokenDecimal),
-  ];
   const callOptions = {
     approvalFlags,
     setFeeFlags,
     depositFlags,
+    withdrawFlags,
   };
 
   // call safe
@@ -50,7 +77,7 @@ export async function register(options) {
 
 async function registerWithCall(options, callOptions) {
   const {register, lifecycle, signer} = options;
-  const {approvalFlags, depositFlags, setFeeFlags} = callOptions;
+  const {approvalFlags, depositFlags, setFeeFlags, withdrawFlags} = callOptions;
   const sendFlags = [
     `--rpc-url=${lifecycle.sourceChainRpc}`,
   ];
@@ -73,47 +100,71 @@ async function registerWithCall(options, callOptions) {
   const txSetFee = await $`cast send ${setFeeFlags}`.quiet();
   console.log(txSetFee.stdout);
 
-  depositFlags.unshift(...[
-    ...sendFlags,
-    register.contract,
-  ]);
-  await $`echo cast send ${depositFlags}`
-  depositFlags.unshift(`--private-key=${signer}`);
-  const txDeposit = await $`cast send ${depositFlags}`.quiet();
-  console.log(txDeposit.stdout);
+  if (depositFlags.length) {
+    depositFlags.unshift(...[
+      ...sendFlags,
+      register.contract,
+    ]);
+    await $`echo cast send ${depositFlags}`
+    depositFlags.unshift(`--private-key=${signer}`);
+    const txDeposit = await $`cast send ${depositFlags}`.quiet();
+    console.log(txDeposit.stdout);
+  }
+  if (withdrawFlags.length) {
+    withdrawFlags.unshift(...[
+      ...sendFlags,
+      register.contract,
+    ]);
+    await $`echo cast send ${withdrawFlags}`
+    withdrawFlags.unshift(`--private-key=${signer}`);
+    const txWithdraw = await $`cast send ${withdrawFlags}`.quiet();
+    console.log(txWithdraw.stdout);
+  }
 }
 
 
 async function registerWithSafe(options, callOptions) {
   const {register, lifecycle, sourceSafeSdk, sourceSafeService, sourceSigner} = options;
-  const {approvalFlags, depositFlags, setFeeFlags} = callOptions;
+  const {approvalFlags, depositFlags, setFeeFlags, withdrawFlags} = callOptions;
 
   const txApprove = await $`cast calldata ${approvalFlags}`;
   const txSetFee = await $`cast calldata ${setFeeFlags}`;
-  const txDeposit = await $`cast calldata ${depositFlags}`;
+
+  const transactions = [
+    {
+      to: register.sourceTokenAddress,
+      value: '0',
+      data: txApprove.stdout.trim(),
+    },
+    {
+      to: register.contract,
+      value: '0',
+      data: txSetFee.stdout.trim(),
+    },
+  ];
+  if (depositFlags.length) {
+    const txDeposit = await $`cast calldata ${depositFlags}`;
+    transactions.push({
+      to: register.contract,
+      value: '0',
+      data: txDeposit.stdout.trim(),
+    });
+  }
+  if (withdrawFlags.length) {
+    const txWithdraw = await $`cast calldata ${withdrawFlags}`;
+    transactions.push({
+      to: register.contract,
+      value: '0',
+      data: txWithdraw.stdout.trim(),
+    });
+  }
 
   const p0 = await safe.propose({
     safeSdk: sourceSafeSdk,
     safeService: sourceSafeService,
     safeAddress: register.safeWalletAddress,
     senderAddress: sourceSigner.address,
-    transactions: [
-      {
-        to: register.sourceTokenAddress,
-        value: '0',
-        data: txApprove.stdout.trim(),
-      },
-      {
-        to: register.contract,
-        value: '0',
-        data: txSetFee.stdout.trim(),
-      },
-      {
-        to: register.contract,
-        value: '0',
-        data: txDeposit.stdout.trim(),
-      },
-    ],
+    transactions,
   });
   console.log(
     chalk.green('proposed register transaction to'),

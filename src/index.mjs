@@ -4,7 +4,7 @@ import * as reg from './register/index.js'
 import * as generateConfigure from './generator/generate_configure.js'
 import * as safepwd from './ecosys/safepwd.js'
 
-// const BIN_PATH = path.resolve(__filename, '../');
+const BIN_PATH = path.resolve(__filename, '../');
 // const WORK_PATH = path.resolve(BIN_PATH, '../../');
 
 
@@ -27,7 +27,8 @@ helixbridge
 `;
 
 async function main() {
-  const options = await initialize.init();
+  const options = await initialize.init(BIN_PATH);
+
   const pargs = arg.programArguments();
   const cmd = pargs[0];
   switch (cmd) {
