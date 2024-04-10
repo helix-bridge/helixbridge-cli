@@ -1,10 +1,12 @@
 import * as safe from "../ecosys/safe.js";
 import * as arg from "../ecosys/arg.js";
+import * as tool from "../ecosys/tool.js";
 
 export async function register(options) {
   const {register, lifecycle} = options;
 
-  const targetChainId = await $`cast chain-id --rpc-url=${lifecycle.targetChainRpc}`;
+  const _targetChainId = await $`cast chain-id --rpc-url=${lifecycle.targetChainRpc}`;
+  const targetChainId = _targetChainId.stdout.trim();
   const _sourceTokenDecimal = await $`cast call --rpc-url=${lifecycle.sourceChainRpc} ${register.sourceTokenAddress} 'decimals()()'`;
   const sourceTokenDecimal = BigInt(_sourceTokenDecimal);
 
@@ -13,6 +15,27 @@ export async function register(options) {
   const liquidityFeeRate = Number(register.liquidityFeeRate) * (10 ** 3);
   const deposit = BigInt(register.deposit) * (10n ** sourceTokenDecimal);
 
+  const bridgeInfoRecord = await tool.queryBridgeInfoRecord({
+    definition: options.definition,
+    lifecycle,
+    sourceTokenAddress: register.sourceTokenAddress,
+    version: 'lnv2',
+    bridge: 'lnv2-opposite',
+  });
+
+  const withdrawFlags = [];
+  const depositedPenalty = BigInt(bridgeInfoRecord ? bridgeInfoRecord.margin : 0n);
+
+  let setFeeDeposit = 0n;
+  const gapForDepositTarget = deposit - depositedPenalty;
+  if (tool.absBigInt(gapForDepositTarget) > 10n) {
+    if (gapForDepositTarget > 0n) {
+      setFeeDeposit = gapForDepositTarget;
+    } else {
+      // todo: withdrawFlags
+    }
+  }
+
   const approveFlags = [
     'approve(address,uint256)(bool)',
     register.contract,
@@ -20,20 +43,18 @@ export async function register(options) {
   ];
   const setFeeFlags = [
     'updateProviderFeeAndMargin(uint256,address,address,uint112,uint112,uint16)()',
-    targetChainId.stdout.trim(),
+    targetChainId,
     register.sourceTokenAddress,
     register.targetTokenAddress,
-    deposit,
+    setFeeDeposit,
     baseFee,
     liquidityFeeRate,
   ];
 
   const callOptions = {
-    decimals: sourceTokenDecimal,
-    baseFee,
-    liquidityFeeRate,
     approveFlags,
     setFeeFlags,
+    withdrawFlags
   };
 
   // call safe
@@ -48,7 +69,7 @@ export async function register(options) {
 
 async function registerWithCall(options, callOptions) {
   const {register, lifecycle, signer} = options;
-  const {approveFlags, setFeeFlags} = callOptions;
+  const {approveFlags, setFeeFlags, withdrawFlags} = callOptions;
   const sourceSendFlags = [
     `--rpc-url=${lifecycle.sourceChainRpc}`,
   ];
@@ -81,7 +102,7 @@ async function registerWithSafe(options, callOptions) {
     sourceSafeSdk, sourceSafeService, sourceSigner,
     targetSafeSdk, targetSafeService, targetSigner,
   } = options;
-  const {approveFlags, setFeeFlags} = callOptions;
+  const {approveFlags, setFeeFlags, withdrawFlags} = callOptions;
 
   const txApprove = await $`cast calldata ${approveFlags}`;
   const txSetFee = await $`cast calldata ${setFeeFlags}`;
