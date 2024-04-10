@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 #
 
 set -e
@@ -6,4 +6,5 @@ set -e
 BIN_PATH=$(cd "$(dirname "$0")"; pwd -P)
 WORK_PATH=${BIN_PATH}/../
 
-zx ${WORK_PATH}/src/index.mjs ${@}
+cd ${WORK_PATH}
+npx zx ${WORK_PATH}/src/index.mjs ${@}

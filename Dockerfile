@@ -1,7 +1,12 @@
-FROM node:20-alpine
+FROM ghcr.io/foundry-rs/foundry:nightly as foundry
+
+FROM node:21-alpine
+
+COPY --from=foundry /usr/local/bin/cast /usr/local/bin/
 
 COPY . /app
+RUN npm config set update-notifier false \
+    && cd /app \
+    && yarn install
 
-RUN yarn install
-
-CMD ["npx", "zx", "/app/src/index.mjs"]
+ENTRYPOINT ["/app/scripts/helixbridge.sh"]
