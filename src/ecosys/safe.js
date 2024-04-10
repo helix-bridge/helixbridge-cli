@@ -47,8 +47,8 @@ async function initSafe(options) {
   const network = await provider.getNetwork();
   const safeService = new SafeApiKit.default({
     chainId: network.chainId,
-    // txServiceUrl: register.safeWalletUrl,
-    txServiceUrl: 'https://httpbin.org/anything',
+    txServiceUrl: register.safeWalletUrl,
+    // txServiceUrl: 'https://httpbin.org/anything',
   });
   return {
     safeSdk,
