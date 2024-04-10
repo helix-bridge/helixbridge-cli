@@ -4,4 +4,4 @@ COPY . /app
 
 RUN yarn install
 
-ENDPOINT ["/app/scripts/helixbridge.sh"]
+ENTRYPOINT ["/app/scripts/helixbridge.sh"]
