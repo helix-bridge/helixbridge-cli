@@ -26,7 +26,7 @@ helixbridge
                         [--encrypted-private-key=your_encrypted_private_key]
 `;
 
-if (arg.option('verbose', 'v')) {
+if (arg.option('verbose')) {
   $.verbose = true;
 }
 
