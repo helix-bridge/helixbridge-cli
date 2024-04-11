@@ -94,7 +94,10 @@ export async function propose(options = {safeSdk, safeService, transactions, saf
   }
 
   const safeTransaction = await safeSdk.createTransaction({
-    transactions
+    transactions,
+    options: {
+      nonce,
+    },
   });
   const safeTxHash = await safeSdk.getTransactionHash(safeTransaction);
   const senderSignature = await safeSdk.signTransaction(safeTransaction);
