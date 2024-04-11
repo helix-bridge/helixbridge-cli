@@ -7,19 +7,32 @@ export async function register(options) {
 
   const _sourceChainId = await $`cast chain-id --rpc-url=${lifecycle.sourceChainRpc}`;
   const _targetChainId = await $`cast chain-id --rpc-url=${lifecycle.targetChainRpc}`;
-  const _sourceTokenDecimal = await $`cast call --rpc-url=${lifecycle.sourceChainRpc} ${register.sourceTokenAddress} 'decimals()()'`;
-  const _targetTokenDecimal = await $`cast call --rpc-url=${lifecycle.targetChainRpc} ${register.targetTokenAddress} 'decimals()()'`;
+  let _sourceTokenDecimal;
+  try {
+    _sourceTokenDecimal = await $`cast call --rpc-url=${lifecycle.sourceChainRpc} ${register.sourceTokenAddress} 'decimals()()'`;
+    _sourceTokenDecimal = _sourceChainId.stdout.trim();
+  } catch (e) {
+    console.log(chalk.yellow(`[warn] can not query decimal from contract(${lifecycle.sourceChainName}): ${e}`));
+  }
+  let _targetTokenDecimal;
+  try {
+    _targetTokenDecimal = await $`cast call --rpc-url=${lifecycle.targetChainRpc} ${register.targetTokenAddress} 'decimals()()'`;
+    _targetTokenDecimal = _targetChainId.stdout.trim();
+  } catch (e) {
+    console.log(chalk.yellow(`[warn] can not query decimal from contract(${lifecycle.targetChainName}): ${e}`));
+  }
+
   const sourceChainId = _sourceChainId.stdout.trim();
   const targetChainId = _targetChainId.stdout.trim();
   const sourceTokenDecimal = tool.pickDecimal({
     definition,
-    decimal: _sourceTokenDecimal.stdout.trim(),
+    decimal: _sourceTokenDecimal,
     chain: lifecycle.sourceChainName,
     symbol: register.symbol,
   });
   const targetTokenDecimal = tool.pickDecimal({
     definition,
-    decimal: _targetTokenDecimal.stdout.trim(),
+    decimal: _targetTokenDecimal,
     chain: lifecycle.targetChainName,
     symbol: register.symbol,
   });

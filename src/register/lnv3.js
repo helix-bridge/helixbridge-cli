@@ -3,11 +3,23 @@ import * as safe from '../ecosys/safe.js'
 import * as tool from '../ecosys/tool.js'
 
 export async function register(options) {
-  const {register, lifecycle} = options;
+  const {register, lifecycle, definition} = options;
 
   const targetChainId = await $`cast chain-id --rpc-url=${lifecycle.targetChainRpc}`;
-  const _sourceTokenDecimal = await $`cast call --rpc-url=${lifecycle.sourceChainRpc} ${register.sourceTokenAddress} 'decimals()()'`;
-  const sourceTokenDecimal = BigInt(_sourceTokenDecimal);
+  let _sourceTokenDecimal;
+  try {
+    _sourceTokenDecimal = await $`cast call --rpc-url=${lifecycle.sourceChainRpc} ${register.sourceTokenAddress} 'decimals()()'`;
+    _sourceTokenDecimal = _sourceTokenDecimal.stdout.trim();
+  } catch (e) {
+    console.log(chalk.yellow(`[warn] can not query decimal from contract(${lifecycle.sourceChainName}): ${e}`));
+  }
+
+  const sourceTokenDecimal = tool.pickDecimal({
+    definition,
+    decimal: _sourceTokenDecimal,
+    chain: lifecycle.sourceChainName,
+    symbol: register.symbol,
+  });
   const baseFee = tool.floatToBigInt(register.baseFee, sourceTokenDecimal);
   const liquidityFeeRate = Number(register.liquidityFeeRate) * (10 ** 3);
   const transferLimit = BigInt(register.transferLimit) * (10n ** sourceTokenDecimal);
@@ -134,7 +146,7 @@ async function registerWithSafe(options, callOptions) {
   const txSetFee = await $`cast calldata ${setFeeFlags}`;
   const featureApprove = definition.features.approve;
 
-  const transactions =[];
+  const transactions = [];
   if (featureApprove.disable.indexOf(register.symbol) === -1) {
     transactions.push({
       to: register.sourceTokenAddress,

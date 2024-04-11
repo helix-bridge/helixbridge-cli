@@ -26,6 +26,10 @@ helixbridge
                         [--encrypted-private-key=your_encrypted_private_key]
 `;
 
+if (arg.option('verbose')) {
+  $.verbose = true;
+}
+
 async function main() {
   const options = await initialize.init(BIN_PATH);
 
