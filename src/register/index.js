@@ -121,7 +121,7 @@ async function hashRegister(register) {
   for (const key of keys) {
     merged += register[key];
   }
-  const hash = await $`echo ${merged} | sha256sum | cut -d ' ' -f1`;
+  const hash = await $`echo "${merged}" | sha256sum | cut -d ' ' -f1`;
   return {
     origin: merged,
     hash: hash.stdout.trim(),

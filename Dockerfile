@@ -5,7 +5,9 @@ FROM node:21-alpine
 COPY --from=foundry /usr/local/bin/cast /usr/local/bin/
 
 COPY . /app
-RUN npm config set update-notifier false \
+RUN apk update \
+    && apk add bash \
+    && npm config set update-notifier false \
     && npm i -g zx \
     && cd /app \
     && npm i
