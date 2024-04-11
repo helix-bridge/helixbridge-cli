@@ -6,7 +6,8 @@ COPY --from=foundry /usr/local/bin/cast /usr/local/bin/
 
 COPY . /app
 RUN npm config set update-notifier false \
+    && npm i -g zx \
     && cd /app \
-    && yarn install
+    && npm i
 
 ENTRYPOINT ["/app/scripts/helixbridge.sh"]

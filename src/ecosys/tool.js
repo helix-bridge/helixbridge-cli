@@ -3,11 +3,10 @@ export function absBigInt(n) {
 }
 
 export function floatToBigInt(value, decimal) {
-  const _v = Number(value);
-  const isFloat = _v % 1 !== 0;
+  const isFloat = String(value).indexOf('.') > -1;
   let fixedValue = isFloat
     ? BigInt(Number(value.toFixed(2)) * (10 ** 2))
-    : _v;
+    : BigInt(value);
   return isFloat
     ? fixedValue * (10n ** (decimal - 2n))
     : fixedValue * (10n ** decimal);
@@ -25,6 +24,18 @@ export function pickIndexEndpoint(options, chainName) {
   }
   console.log(`not found index endpoint for chain: ${chainName}`);
   process.exit(1);
+}
+
+export function pickDecimal(options = {definition, decimal, chain, symbol}) {
+  const {definition, decimal, chain, symbol} = options;
+  if (decimal && decimal.length > 2) {
+    return BigInt(decimal);
+  }
+  const definitionDecimal = definition.decimal;
+  const symbolDecimal = definitionDecimal[symbol];
+  const chainDecimal = symbolDecimal[chain];
+  const symbolDefaultDecimal = symbolDecimal['generic'];
+  return BigInt(chainDecimal ? chainDecimal : symbolDefaultDecimal);
 }
 
 export async function queryBridgeInfoRecord(options = {lifecycle, version, sourceTokenAddress, bridge}) {
