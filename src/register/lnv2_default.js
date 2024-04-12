@@ -193,6 +193,7 @@ async function registerWithSafe(options, callOptions) {
 
   if (p0Transactions.length) {
     const p0 = await safe.propose({
+      definition,
       safeSdk: targetSafeSdk,
       safeService: targetSafeService,
       safeAddress: register.safeWalletAddress,
@@ -225,6 +226,7 @@ async function registerWithSafe(options, callOptions) {
   }
 
   const p1 = await safe.propose({
+    definition,
     safeSdk: sourceSafeSdk,
     safeService: sourceSafeService,
     safeAddress: register.safeWalletAddress,

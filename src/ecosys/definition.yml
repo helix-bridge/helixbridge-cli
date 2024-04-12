@@ -43,3 +43,8 @@ features:
   approve:
     disable:
       - ring
+
+safepin:
+  46: # darwinia
+    safeTxGas: 613599
+    gasPrice: 154000000000
