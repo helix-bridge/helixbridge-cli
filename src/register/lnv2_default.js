@@ -53,23 +53,24 @@ export async function register(options) {
   const withdrawFlags = [];
   const depositedPenalty = BigInt(bridgeInfoRecord ? bridgeInfoRecord.margin : 0n);
 
-  const gapForDepositTarget = deposit - depositedPenalty;
-  if (tool.absBigInt(gapForDepositTarget) > 10n) {
-    if (gapForDepositTarget > 0n) {
+  let sourceDepositToTarget = deposit - depositedPenalty;
+  if (tool.absBigInt(sourceDepositToTarget) > 10n) {
+    if (sourceDepositToTarget > 0n) {
       depositFlags.push(...[
         'depositProviderMargin(uint256,address,address,uint256)()',
         sourceChainId,
         register.sourceTokenAddress,
         register.targetTokenAddress,
-        gapForDepositTarget,
+        sourceDepositToTarget,
       ]);
     } else {
+      // sourceDepositToTarget = -sourceDepositToTarget;
       // withdrawFlags.push(...[
       //   'requestWithdrawMargin(uint256,address,address,uint112,bytes)()',
       //   targetChainId,
       //   register.sourceTokenAddress,
       //   register.targetTokenAddress,
-      //   //-gapForDepositTarget,
+      //   sourceDepositToTarget,
       //   50n * 10n ** 18n,
       //   lifecycle.relayerAddress,
       // ]);
@@ -95,6 +96,7 @@ export async function register(options) {
     depositFlags,
     setFeeFlags,
     withdrawFlags,
+    sourceDepositToTarget,
   };
 
   // call safe
@@ -108,7 +110,7 @@ export async function register(options) {
 
 async function registerWithCall(options, callOptions) {
   const {register, lifecycle, definition, signer} = options;
-  const {approveFlags, depositFlags, setFeeFlags, withdrawFlags} = callOptions;
+  const {approveFlags, depositFlags, setFeeFlags, withdrawFlags, sourceDepositToTarget} = callOptions;
   const sourceSendFlags = [
     `--rpc-url=${lifecycle.sourceChainRpc}`,
   ];
@@ -132,6 +134,7 @@ async function registerWithCall(options, callOptions) {
     depositFlags.unshift(...[
       ...targetSendFlags,
       register.contract,
+      ` --value=${sourceDepositToTarget}`,
     ]);
     await $`echo cast send ${depositFlags}`;
     depositFlags.unshift(`--private-key=${signer}`);
@@ -167,7 +170,7 @@ async function registerWithSafe(options, callOptions) {
     sourceSafeSdk, sourceSafeService, sourceSigner,
     targetSafeSdk, targetSafeService, targetSigner,
   } = options;
-  const {approveFlags, depositFlags, setFeeFlags, withdrawFlags} = callOptions;
+  const {approveFlags, depositFlags, setFeeFlags, withdrawFlags, sourceDepositToTarget} = callOptions;
 
   const txApprove = await $`cast calldata ${approveFlags}`;
   const txSetFee = await $`cast calldata ${setFeeFlags}`;
@@ -186,7 +189,7 @@ async function registerWithSafe(options, callOptions) {
     const txDeposit = await $`cast calldata ${depositFlags}`;
     p0Transactions.push({
       to: register.contract,
-      value: '0',
+      value: sourceDepositToTarget,
       data: txDeposit.stdout.trim(),
     });
   }
