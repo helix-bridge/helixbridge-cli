@@ -161,7 +161,7 @@ async function registerWithSafe(options, callOptions) {
     transactions: [
       {
         to: register.contract,
-        value: sourceDeposit,
+        value: sourceDeposit.toString(),
         data: txSetFee.stdout.trim(),
       }
     ],

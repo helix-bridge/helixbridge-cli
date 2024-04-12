@@ -189,7 +189,7 @@ async function registerWithSafe(options, callOptions) {
     const txDeposit = await $`cast calldata ${depositFlags}`;
     p0Transactions.push({
       to: register.contract,
-      value: sourceDepositToTarget,
+      value: sourceDepositToTarget.toString(),
       data: txDeposit.stdout.trim(),
     });
   }
