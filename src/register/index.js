@@ -77,7 +77,7 @@ async function handle(options) {
   let relayerAddress = register.safeWalletAddress;
   if (!relayerAddress) {
     const _walletAddress = await $`cast wallet address ${options.signer}`.quiet();
-    relayerAddress = _walletAddress.stdout.trim().toLowerCase();
+    relayerAddress = _walletAddress.stdout.trim();
   }
 
   options.lifecycle = {
@@ -85,7 +85,7 @@ async function handle(options) {
     targetChainName,
     sourceChainRpc,
     targetChainRpc,
-    relayerAddress,
+    relayerAddress: relayerAddress.toLowerCase(),
   };
 
   const hash = await hashRegister(register);
