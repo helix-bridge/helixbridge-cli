@@ -80,10 +80,12 @@ async function initSafe(options) {
 }
 
 
-export async function propose(options = {safeSdk, safeService, transactions, safeAddress, senderAddress}) {
-  const {safeSdk, safeService, transactions, safeAddress, senderAddress} = options;
+export async function propose(options = {definition, safeSdk, safeService, transactions, safeAddress, senderAddress}) {
+  const {definition, safeSdk, safeService, transactions, safeAddress, senderAddress} = options;
   const chainId = await safeSdk.getChainId();
   const remoteNonce = await safeSdk.getNonce();
+
+  const safepin = definition.safepin[chainId];
 
   let nonce;
   if (cachedNonce[chainId]) {
@@ -93,11 +95,13 @@ export async function propose(options = {safeSdk, safeService, transactions, saf
     nonce = remoteNonce;
   }
 
+  let createTransactionOptions = { nonce };
+  if (safepin) {
+    createTransactionOptions = {...createTransactionOptions, ...safepin};
+  }
   const safeTransaction = await safeSdk.createTransaction({
     transactions,
-    options: {
-      nonce,
-    },
+    options: createTransactionOptions,
   });
   const safeTxHash = await safeSdk.getTransactionHash(safeTransaction);
   const senderSignature = await safeSdk.signTransaction(safeTransaction);

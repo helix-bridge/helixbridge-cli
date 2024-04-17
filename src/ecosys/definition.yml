@@ -3,7 +3,9 @@ rpc:
   arbitrum: https://arbitrum-one-rpc.publicnode.com
   polygon: https://polygon-bor-rpc.publicnode.com
   darwinia: https://rpc.darwinia.network
+  darwinia-dvm: https://rpc.darwinia.network
   crab: https://crab-rpc.darwinia.network
+  crab-darwinia-dvm: https://crab-rpc.darwinia.network
   pangolin: https://pangolin-rpc.darwinia.network
   optimism: https://optimism-rpc.publicnode.com
   sepolia: https://ethereum-sepolia-rpc.publicnode.com
@@ -18,7 +20,9 @@ indexer:
       - arbitrum
       - polygon
       - darwinia
+      - darwinia-dvm
       - crab
+      - darwinia-dvm
       - optimism
   testnet:
     endpoint: https://apollo-test.helixbridge.app/graphql
@@ -43,3 +47,8 @@ features:
   approve:
     disable:
       - ring
+
+safepin:
+  46: # darwinia
+    safeTxGas: 613599
+    gasPrice: 154000000000

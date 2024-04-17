@@ -178,6 +178,7 @@ async function registerWithSafe(options, callOptions) {
   }
 
   const p0 = await safe.propose({
+    definition,
     safeSdk: sourceSafeSdk,
     safeService: sourceSafeService,
     safeAddress: register.safeWalletAddress,
