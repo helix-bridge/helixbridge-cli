@@ -73,7 +73,7 @@ export async function queryBridgeInfoRecord(options = {lifecycle, version, sourc
       row: 100,
       fromChain: lifecycle.sourceChainName,
       toChain: lifecycle.targetChainName,
-      relayer: lifecycle.relayerAddress,
+      relayer: lifecycle.relayerAddress.toLowerCase(),
       version,
     }
   };
