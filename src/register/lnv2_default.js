@@ -17,7 +17,7 @@ export async function register(options) {
   let _targetTokenDecimal;
   try {
     _targetTokenDecimal = await $`cast call --rpc-url=${lifecycle.targetChainRpc} ${register.targetTokenAddress} 'decimals()()'`;
-    _targetTokenDecimal = _targetChainId.stdout.trim();
+    _targetTokenDecimal = _targetTokenDecimal.stdout.trim();
   } catch (e) {
     console.log(chalk.yellow(`[warn] can not query decimal from contract(${lifecycle.targetChainName}): ${e}`));
   }
