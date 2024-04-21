@@ -46,7 +46,8 @@ decimal:
 features:
   approve:
     disable:
-      - ring
+      - symbol: ring
+        chain: 46 # darwinia
 
 safepin:
   46: # darwinia
