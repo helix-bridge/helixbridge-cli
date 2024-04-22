@@ -38,6 +38,14 @@ export function pickDecimal(options = {definition, decimal, chain, symbol}) {
   return BigInt(chainDecimal ? chainDecimal : symbolDefaultDecimal);
 }
 
+export function isDisableApprove(options = {definition, symbol, chainId}) {
+  const {definition, symbol, chainId} = options;
+  const featureApprove = definition.features.approve;
+  const approveDisable = featureApprove.disable;
+  const ix = approveDisable.findIndex(item => item.symbol === symbol && item.chain.toString() === chainId.toString())
+  return ix !== -1;
+}
+
 export async function queryBridgeInfoRecord(options = {lifecycle, version, sourceTokenAddress, bridge}) {
   const {lifecycle, version, sourceTokenAddress, bridge} = options;
   const gqlBody = {

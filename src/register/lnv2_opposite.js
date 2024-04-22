@@ -67,6 +67,7 @@ export async function register(options) {
     setFeeFlags,
     withdrawFlags,
     sourceDeposit,
+    targetChainId,
   };
 
   // call safe
@@ -81,7 +82,7 @@ export async function register(options) {
 
 async function registerWithCall(options, callOptions) {
   const {register, lifecycle, definition, signer} = options;
-  const {approveFlags, setFeeFlags, withdrawFlags, sourceDeposit} = callOptions;
+  const {approveFlags, setFeeFlags, withdrawFlags, sourceDeposit, targetChainId} = callOptions;
   const sourceSendFlags = [
     `--rpc-url=${lifecycle.sourceChainRpc}`,
   ];
@@ -89,8 +90,7 @@ async function registerWithCall(options, callOptions) {
     `--rpc-url=${lifecycle.targetChainRpc}`,
   ];
 
-  const featureApprove = definition.features.approve;
-  if (featureApprove.disable.indexOf(register.symbol) === -1) {
+  if (!tool.isDisableApprove({definition, symbol: register.symbol, chainId: targetChainId})) {
     approveFlags.unshift(...[
       ...targetSendFlags,
       register.targetTokenAddress,
@@ -118,15 +118,14 @@ async function registerWithSafe(options, callOptions) {
     sourceSafeSdk, sourceSafeService, sourceSigner,
     targetSafeSdk, targetSafeService, targetSigner,
   } = options;
-  const {approveFlags, setFeeFlags, withdrawFlags, sourceDeposit} = callOptions;
+  const {approveFlags, setFeeFlags, withdrawFlags, sourceDeposit, targetChainId} = callOptions;
 
   const txApprove = await $`cast calldata ${approveFlags}`;
   const txSetFee = await $`cast calldata ${setFeeFlags}`;
 
   const p0Transactions = [];
 
-  const featureApprove = definition.features.approve;
-  if (featureApprove.disable.indexOf(register.symbol) === -1) {
+  if (!tool.isDisableApprove({definition, symbol: register.symbol, chainId: targetChainId})) {
     p0Transactions.push({
       to: register.targetTokenAddress,
       value: '0',

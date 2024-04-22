@@ -1,6 +1,7 @@
 import * as safe from "../ecosys/safe.js";
 import * as arg from "../ecosys/arg.js";
 import * as tool from '../ecosys/tool.js';
+import {isDisableApprove} from "../ecosys/tool.js";
 
 export async function register(options) {
   const {register, lifecycle, definition} = options;
@@ -97,6 +98,7 @@ export async function register(options) {
     setFeeFlags,
     withdrawFlags,
     sourceDepositToTarget,
+    targetChainId,
   };
 
   // call safe
@@ -110,16 +112,15 @@ export async function register(options) {
 
 async function registerWithCall(options, callOptions) {
   const {register, lifecycle, definition, signer} = options;
-  const {approveFlags, depositFlags, setFeeFlags, withdrawFlags, sourceDepositToTarget} = callOptions;
+  const {approveFlags, depositFlags, setFeeFlags, withdrawFlags, sourceDepositToTarget, targetChainId} = callOptions;
   const sourceSendFlags = [
     `--rpc-url=${lifecycle.sourceChainRpc}`,
   ];
   const targetSendFlags = [
     `--rpc-url=${lifecycle.targetChainRpc}`,
   ];
-  const featureApprove = definition.features.approve;
 
-  if (featureApprove.disable.indexOf(register.symbol) === -1) {
+  if (!tool.isDisableApprove({definition, symbol: register.symbol, chainId: targetChainId})) {
     approveFlags.unshift(...[
       ...targetSendFlags,
       register.targetTokenAddress,
@@ -170,15 +171,13 @@ async function registerWithSafe(options, callOptions) {
     sourceSafeSdk, sourceSafeService, sourceSigner,
     targetSafeSdk, targetSafeService, targetSigner,
   } = options;
-  const {approveFlags, depositFlags, setFeeFlags, withdrawFlags, sourceDepositToTarget} = callOptions;
+  const {approveFlags, depositFlags, setFeeFlags, withdrawFlags, sourceDepositToTarget, targetChainId} = callOptions;
 
   const txApprove = await $`cast calldata ${approveFlags}`;
   const txSetFee = await $`cast calldata ${setFeeFlags}`;
 
-  const featureApprove = definition.features.approve;
-
   const p0Transactions = [];
-  if (featureApprove.disable.indexOf(register.symbol) === -1) {
+  if (!tool.isDisableApprove({definition, symbol: register.symbol, chainId: targetChainId})) {
     p0Transactions.push({
       to: register.targetTokenAddress,
       value: '0',
