@@ -86,14 +86,11 @@ async function registerWithCall(options, callOptions) {
   const sourceSendFlags = [
     `--rpc-url=${lifecycle.sourceChainRpc}`,
   ];
-  const targetSendFlags = [
-    `--rpc-url=${lifecycle.targetChainRpc}`,
-  ];
 
   if (!tool.isDisableApprove({definition, symbol: register.symbol, chainId: targetChainId})) {
     approveFlags.unshift(...[
-      ...targetSendFlags,
-      register.targetTokenAddress,
+      ...sourceSendFlags,
+      register.sourceTokenAddress,
     ]);
     await $`echo cast send ${approveFlags}`;
     approveFlags.unshift(`--private-key=${signer}`);
@@ -116,7 +113,6 @@ async function registerWithSafe(options, callOptions) {
   const {
     register, lifecycle, definition,
     sourceSafeSdk, sourceSafeService, sourceSigner,
-    targetSafeSdk, targetSafeService, targetSigner,
   } = options;
   const {approveFlags, setFeeFlags, withdrawFlags, sourceDeposit, targetChainId} = callOptions;
 
@@ -132,24 +128,11 @@ async function registerWithSafe(options, callOptions) {
       data: txApprove.stdout.trim(),
     });
   }
-
-  if (p0Transactions.length) {
-    const p0 = await safe.propose({
-      definition,
-      safeSdk: targetSafeSdk,
-      safeService: targetSafeService,
-      safeAddress: register.safeWalletAddress,
-      senderAddress: targetSigner.address,
-      transactions: p0Transactions,
-    });
-    console.log(
-      chalk.green('proposed approve transaction to'),
-      `${lifecycle.targetChainName}: ${register.safeWalletAddress} (safe)`
-    );
-    if (p0 && arg.isDebug()) {
-      console.log(p0);
-    }
-  }
+  p0Transactions.push({
+    to: register.contract,
+    value: sourceDeposit.toString(),
+    data: txSetFee.stdout.trim(),
+  });
 
   const p1 = await safe.propose({
     definition,
@@ -157,13 +140,7 @@ async function registerWithSafe(options, callOptions) {
     safeService: sourceSafeService,
     safeAddress: register.safeWalletAddress,
     senderAddress: sourceSigner.address,
-    transactions: [
-      {
-        to: register.contract,
-        value: sourceDeposit.toString(),
-        data: txSetFee.stdout.trim(),
-      }
-    ],
+    transactions: p0Transactions,
   });
   console.log(
     chalk.green('proposed register transaction to'),
