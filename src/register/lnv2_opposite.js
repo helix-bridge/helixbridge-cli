@@ -127,7 +127,7 @@ async function registerWithSafe(options, callOptions) {
 
   if (!tool.isDisableApprove({definition, symbol: register.symbol, chainId: targetChainId})) {
     p0Transactions.push({
-      to: register.targetTokenAddress,
+      to: register.sourceTokenAddress,
       value: '0',
       data: txApprove.stdout.trim(),
     });
