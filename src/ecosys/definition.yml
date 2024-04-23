@@ -53,3 +53,6 @@ safepin:
   46: # darwinia
     safeTxGas: 613599
     gasPrice: 154000000000
+  42161:
+    safeTxGas: 400000
+    gasPrice: 20000000
