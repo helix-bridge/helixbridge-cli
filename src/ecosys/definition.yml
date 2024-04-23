@@ -54,5 +54,27 @@ safepin:
     safeTxGas: 613599
     gasPrice: 154000000000
   42161:
-    safeTxGas: 400000
-    gasPrice: 20000000
+    safeTxGas: 552730
+    #gasPrice: 10000000
+
+nativetoken:
+  1: eth # ethereum
+  10: eth # op
+  43: pring #pangolin
+  44: crab # crab
+  45: oring #pangoro
+  46: ring  # darwinia
+  56: bnb # bnb
+  100: xdai # genosis
+  169: eth # manta pacific mainnet
+  592: astr # astr
+  1284: glmr # moonbeam
+  1285: movr # moonriver
+  8453: eth # base
+  42161: eth # arbitrum
+  137: matic # polygon
+  5000: mnt # mantle
+  10000: bch # smart bch
+  59144: eth # linea
+
+

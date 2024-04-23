@@ -8,7 +8,7 @@ const cachedNonce = {};
 
 export async function init(options) {
   const {register, lifecycle, signer} = options;
-  if (!register.safeWalletAddress) {
+  if (!register.safeWalletAddress && !register.sourceSafeWalletAddress && !register.targetSafeWalletAddress) {
     return;
   }
   if (register.sourceSafeWalletUrl) {
@@ -20,6 +20,7 @@ export async function init(options) {
         register,
         chainRpc: lifecycle.sourceChainRpc,
         safeWalletUrl: register.sourceSafeWalletUrl,
+        safeWalletAddress: register.safeWalletAddress ?? register.sourceSafeWalletAddress,
         signer,
       });
       cachedSafe[lifecycle.sourceChainName] = safe;
@@ -35,11 +36,12 @@ export async function init(options) {
     let safe;
     if (cachedSafe[lifecycle.targetChainName]) {
       safe = cachedSafe[lifecycle.targetChainName];
-    } else  {
+    } else {
       safe = await initSafe({
         register,
         chainRpc: lifecycle.targetChainRpc,
         safeWalletUrl: register.targetSafeWalletUrl,
+        safeWalletAddress: register.safeWalletAddress ?? register.targetSafeWalletAddress,
         signer,
       });
       cachedSafe[lifecycle.targetChainName] = safe;
@@ -54,14 +56,14 @@ export async function init(options) {
 }
 
 async function initSafe(options) {
-  const {register, chainRpc, signer, safeWalletUrl} = options;
+  const {chainRpc, signer, safeWalletUrl, safeWalletAddress} = options;
   const provider = new ethers.JsonRpcProvider(chainRpc);
   const wallet = new ethers.Wallet(signer, provider);
   const ethAdapter = new EthersAdapter({
     ethers,
     signerOrProvider: wallet,
   });
-  const safeSdk = await Safe.default.create({ethAdapter: ethAdapter, safeAddress: register.safeWalletAddress});
+  const safeSdk = await Safe.default.create({ethAdapter: ethAdapter, safeAddress: safeWalletAddress});
 
   const network = await provider.getNetwork();
   console.log(`init safe for chain ${network.chainId} with ${safeWalletUrl}`);
@@ -95,7 +97,7 @@ export async function propose(options = {definition, safeSdk, safeService, trans
     nonce = remoteNonce;
   }
 
-  let createTransactionOptions = { nonce };
+  let createTransactionOptions = {nonce};
   if (safepin) {
     createTransactionOptions = {...createTransactionOptions, ...safepin};
   }

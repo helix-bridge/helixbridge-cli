@@ -102,7 +102,11 @@ export async function register(options) {
   };
 
   // call safe
-  if (register.safeWalletAddress && register.sourceSafeWalletUrl && register.targetSafeWalletUrl) {
+  if (register.sourceSafeWalletUrl && register.targetSafeWalletUrl) {
+    if (!register.safeWalletAddress && !register.sourceSafeWalletAddress && !register.targetSafeWalletAddress) {
+      console.log('missing safe wallet address');
+      return;
+    }
     await registerWithSafe(options, callOptions);
     return;
   }
@@ -131,11 +135,14 @@ async function registerWithCall(options, callOptions) {
     console.log(txApprove.stdout);
   }
 
+  const depositFlagsValue = tool.isNativeToken({definition, symbol: register.symbol, chainId: targetChainId})
+    ? sourceDepositToTarget
+    : '0';
   if (depositFlags.length) {
     depositFlags.unshift(...[
       ...targetSendFlags,
       register.contract,
-      ` --value=${sourceDepositToTarget}`,
+      ` --value=${depositFlagsValue}`,
     ]);
     await $`echo cast send ${depositFlags}`;
     depositFlags.unshift(`--private-key=${signer}`);
@@ -188,7 +195,9 @@ async function registerWithSafe(options, callOptions) {
     const txDeposit = await $`cast calldata ${depositFlags}`;
     p0Transactions.push({
       to: register.contract,
-      value: sourceDepositToTarget.toString(),
+      value: tool.isNativeToken({definition, symbol: register.symbol, chainId: targetChainId})
+        ? sourceDepositToTarget.toString()
+        : '0',
       data: txDeposit.stdout.trim(),
     });
   }
@@ -198,13 +207,13 @@ async function registerWithSafe(options, callOptions) {
       definition,
       safeSdk: targetSafeSdk,
       safeService: targetSafeService,
-      safeAddress: register.safeWalletAddress,
+      safeAddress: register.safeWalletAddress ?? register.targetSafeWalletAddress,
       senderAddress: targetSigner.address,
       transactions: p0Transactions,
     });
     console.log(
       chalk.green('proposed deposit transaction to'),
-      `${lifecycle.targetChainName}: ${register.safeWalletAddress} (safe)`
+      `${lifecycle.targetChainName}: ${register.safeWalletAddress ?? register.targetSafeWalletAddress} (safe)`
     );
     if (p0 && arg.isDebug()) {
       console.log(p0);
@@ -231,13 +240,13 @@ async function registerWithSafe(options, callOptions) {
     definition,
     safeSdk: sourceSafeSdk,
     safeService: sourceSafeService,
-    safeAddress: register.safeWalletAddress,
+    safeAddress: register.safeWalletAddress ?? register.sourceSafeWalletAddress,
     senderAddress: sourceSigner.address,
     transactions: p1Transactions,
   });
   console.log(
     chalk.green('proposed register transaction to'),
-    `${lifecycle.sourceChainName}: ${register.safeWalletAddress} (safe)`
+    `${lifecycle.sourceChainName}: ${register.safeWalletAddress ?? register.sourceSafeWalletAddress} (safe)`
   );
   if (p1 && arg.isDebug()) {
     console.log(p1);

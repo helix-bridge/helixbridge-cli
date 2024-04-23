@@ -46,6 +46,13 @@ export function isDisableApprove(options = {definition, symbol, chainId}) {
   return ix !== -1;
 }
 
+export function isNativeToken(options = {definition, symbol, chainId}) {
+  const {definition, symbol, chainId} = options;
+  const nativetoken = definition.nativetoken[chainId];
+  if (!nativetoken || !symbol) return false;
+  return nativetoken.toLowerCase() === symbol.toLowerCase();
+}
+
 export async function queryBridgeInfoRecord(options = {lifecycle, version, sourceTokenAddress, bridge}) {
   const {lifecycle, version, sourceTokenAddress, bridge} = options;
   const gqlBody = {

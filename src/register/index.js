@@ -74,7 +74,7 @@ async function handle(options) {
     process.exit(1);
   }
 
-  let relayerAddress = register.safeWalletAddress;
+  let relayerAddress = register.safeWalletAddress ?? register.sourceSafeWalletAddress;
   if (!relayerAddress) {
     const _walletAddress = await $`cast wallet address ${options.signer}`.quiet();
     relayerAddress = _walletAddress.stdout.trim();
