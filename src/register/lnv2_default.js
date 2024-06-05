@@ -207,7 +207,7 @@ async function registerWithSafe(options, callOptions) {
       definition,
       safeSdk: targetSafeSdk,
       safeService: targetSafeService,
-      safeAddress: register.safeWalletAddress ?? register.targetSafeWalletAddress,
+      safeAddress: register.targetSafeWalletAddress ?? register.safeWalletAddress,
       senderAddress: targetSigner.address,
       transactions: p0Transactions,
     });
@@ -240,7 +240,7 @@ async function registerWithSafe(options, callOptions) {
     definition,
     safeSdk: sourceSafeSdk,
     safeService: sourceSafeService,
-    safeAddress: register.safeWalletAddress ?? register.sourceSafeWalletAddress,
+    safeAddress: register.sourceSafeWalletAddress ?? register.safeWalletAddress,
     senderAddress: sourceSigner.address,
     transactions: p1Transactions,
   });
