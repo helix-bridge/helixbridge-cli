@@ -11,6 +11,8 @@ rpc:
   sepolia: https://ethereum-sepolia-rpc.publicnode.com
 #  sepolia: https://1rpc.io/sepolia
   arbitrum-sepolia: https://arbitrum-sepolia.blockpi.network/v1/rpc/public
+  scroll: https://rpc.scroll.io
+  base: https://mainnet.base.org
 
 indexer:
   mainnet:
@@ -24,6 +26,8 @@ indexer:
       - crab
       - darwinia-dvm
       - optimism
+      - scroll
+      - base
   testnet:
     endpoint: https://apollo-test.helixbridge.app/graphql
     chains:
