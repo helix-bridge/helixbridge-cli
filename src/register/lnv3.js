@@ -66,7 +66,7 @@ export async function register(options) {
   ];
   const setFeeFlags = [
     'registerLnProvider(uint256,address,address,uint112,uint16,uint112)()',
-    targetChainId.stdout.trim(),
+    targetChainId,
     register.sourceTokenAddress,
     register.targetTokenAddress,
     baseFee,
