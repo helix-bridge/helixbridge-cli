@@ -49,15 +49,61 @@ async function registerWithGroup(options, group) {
   const registers = bridgeConfig.registers;
 
   for (const register of registers) {
-    console.log(`==> start register [${register.type}] [${register.symbol}] ${register.bridge}`);
-    await handle({
-      ...options,
-      register,
-    });
+    const patches = await refactorConfig({...options, registers, register, group});
+    if (patches.length) {
+      for (const ir of patches) {
+        console.log(`==> start register [${ir.type}] [${ir.symbol}] ${ir.bridge}`);
+        await handle({
+          ...options,
+          register: ir,
+        });
+      }
+    } else {
+      console.log(`==> start register [${register.type}] [${register.symbol}] ${register.bridge}`);
+      await handle({
+        ...options,
+        register,
+      });
+    }
     console.log('-----------------------')
     console.log('')
     console.log('')
   }
+}
+
+async function refactorConfig(options) {
+  const {definition, registers, register, group} = options;
+  const include = register.include;
+  if (!include) {
+    return [];
+  }
+  const keys = Object.keys(register);
+  if (keys.length !== 1) {
+    throw new Error(`include mode please do not add other fields: [${keys.join(', ')}]`);
+  }
+
+  let includeFileContent;
+  if (fs.existsSync(include)) {
+    includeFileContent = await fs.readFile(include, 'utf8');
+  }
+  // check path from datapath
+  const pathOfIncludeFromDataPath = arg.datapath(include);
+  if (fs.existsSync(pathOfIncludeFromDataPath)) {
+    includeFileContent = await fs.readFile(pathOfIncludeFromDataPath, 'utf8');
+  }
+  // check group file
+  const pathOfGroupInclude = arg.datapath(`/includes/${group}/${include}`);
+  if (fs.existsSync(pathOfGroupInclude)) {
+    includeFileContent = await fs.readFile(pathOfGroupInclude, 'utf8');
+  }
+  const includeConfigs = YAML.parse(includeFileContent);
+  for (const ic of includeConfigs) {
+    const ickey = `${ic.bridge}${ic.symbol}${ic.type}`;
+    if (registers.findIndex(item => `${item.bridge}${item.symbol}${item.type}` === ickey) > -1) {
+      throw new Error(`duplicated config {bridge: ${ic.bridge}, symbol: ${ic.symbol}, type: ${ic.type}}`);
+    }
+  }
+  return includeConfigs;
 }
 
 async function handle(options) {

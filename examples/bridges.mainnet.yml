@@ -1,18 +1,6 @@
 
 registers:
-  - bridge: arbitrum->polygon
-    symbol: usdt
-    type: lnv3
-    contract: '0xbA5D580B18b6436411562981e02c8A9aA1776D10'
-    sourceTokenAddress: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9'
-    targetTokenAddress: '0xc2132d05d31c914a87c6611c10748aeb04b58e8f'
-    baseFee: 0.1
-    liquidityFeeRate: 0.1
-    transferLimit: 2000
-    deposit: 30
-    approve: 10000000000000
-    safeWalletAddress: '0x000000000Bb6a011dB294ce3F3423f00EAc4959e'
-    sourceSafeWalletUrl: 'https://safe-transaction-arbitrum.safe.global/api'
+  - include: arbitrum-polygon.yml
 
   - bridge: polygon->arbitrum
     symbol: usdt
