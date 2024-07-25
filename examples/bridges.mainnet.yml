@@ -27,17 +27,7 @@ configure:
     - name: polygon
       rpc: https://polygon-rpc.com
   bridges:
-    - direction: arbitrum->polygon
-      feeLimit: 100
-      reorgThreshold: 10
-      bridgeType: lnv3
-      safeWalletAddress: '0x000000000Bb6a011dB294ce3F3423f00EAc4959e'
-      safeWalletUrl: 'https://safe-transaction-polygon.safe.global/api'
-      safeWalletRole: signer
-      tokens:
-        - symbol: usdt->usdt
-          swapRate: 2300
-          withdrawLiquidityCountThreshold: 10
+    - include: arbitrum-polygon.yml
 
     - direction: polygon->arbitrum
       feeLimit: 150

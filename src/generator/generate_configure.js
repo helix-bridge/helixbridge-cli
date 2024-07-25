@@ -29,6 +29,7 @@ async function generateWithGroup(options, group) {
   const bridgeConfigRaw = await fs.readFile(arg.datapath(`/bridges.${group}.yml`), 'utf8');
   const bridgeConfig = YAML.parse(bridgeConfigRaw);
   const configure = bridgeConfig.configure;
+  await refactorConfig({configure, group});
 
   const CONFIGURE_PATH = arg.datapath('/configure');
   const storeFile = `${CONFIGURE_PATH}/configure.${group}.json`;
@@ -50,6 +51,53 @@ async function generateWithGroup(options, group) {
   console.log('');
 }
 
+async function refactorConfig(options) {
+  const {configure, group} = options;
+  const nbdgs = [];
+  for (const bridge of configure.bridges) {
+    const include = bridge.include;
+    if (!include) {
+      nbdgs.push(bridge);
+      continue;
+    }
+
+    const keys = Object.keys(bridge);
+    if (keys.length > 1) {
+      throw new Error(`include mode please do not add other fields: [${keys.join(', ')}]`)
+    }
+
+    let includeFileContent;
+    if (fs.existsSync(include)) {
+      includeFileContent = await fs.readFile(include, 'utf8');
+    }
+    // check path from datapath
+    const pathOfIncludeFromDataPath = arg.datapath(include);
+    if (fs.existsSync(pathOfIncludeFromDataPath)) {
+      includeFileContent = await fs.readFile(pathOfIncludeFromDataPath, 'utf8');
+    }
+    // check group file
+    const pathOfGroupInclude = arg.datapath(`/includes/${group}/configures/${include}`);
+    if (fs.existsSync(pathOfGroupInclude)) {
+      includeFileContent = await fs.readFile(pathOfGroupInclude, 'utf8');
+    }
+    if (!includeFileContent) {
+      throw new Error(`include file ${include} not found, please check your path`);
+    }
+    const includeConfigs = YAML.parse(includeFileContent);
+    if (!includeConfigs) {
+      continue;
+    }
+    // check include configs
+    for (const ic of includeConfigs) {
+      const ickey = `${ic.direction}${ic.bridgeType}`.toUpperCase();
+      if (configure.bridges.findIndex(item => `${item.direction}${item.bridgeType}`.toUpperCase() === ickey) > -1) {
+        throw new Error(`duplicated config {direction: ${ic.direction}, bridgeType: ${ic.bridgeType}}`);
+      }
+    }
+    nbdgs.push(...includeConfigs);
+  }
+  configure.bridges = nbdgs;
+}
 
 async function _fillEncryptedPrivateKey(options) {
   const {configure} = options;
