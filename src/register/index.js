@@ -192,7 +192,7 @@ async function hashRegister(register) {
 async function ensureLock(options, write = false) {
   const {register} = options;
   const irn = _identifyRegisterName(register);
-  const LOCK_PATH = arg.datapath('/lock');
+  const LOCK_PATH = arg.datapath('/outputs/lock');
   const lockName = `${LOCK_PATH}/${irn}.lock.json`;
   if (write) {
     await $`mkdir -p ${LOCK_PATH}`.quiet();

@@ -31,7 +31,7 @@ async function generateWithGroup(options, group) {
   const configure = bridgeConfig.configure;
   await refactorConfig({configure, group});
 
-  const CONFIGURE_PATH = arg.datapath('/configure');
+  const CONFIGURE_PATH = arg.datapath('/outputs/configure');
   const storeFile = `${CONFIGURE_PATH}/configure.${group}.json`;
   await $`mkdir -p ${CONFIGURE_PATH}`.quiet();
 
