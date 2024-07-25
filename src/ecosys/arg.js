@@ -38,6 +38,6 @@ export function datadir() {
 }
 
 export function datapath(file) {
-  return `${datadir()}${file}`
+  return `${datadir()}/${file}`
 }
 

@@ -92,14 +92,20 @@ async function refactorConfig(options) {
     includeFileContent = await fs.readFile(pathOfIncludeFromDataPath, 'utf8');
   }
   // check group file
-  const pathOfGroupInclude = arg.datapath(`/includes/${group}/${include}`);
+  const pathOfGroupInclude = arg.datapath(`/includes/${group}/registers/${include}`);
   if (fs.existsSync(pathOfGroupInclude)) {
     includeFileContent = await fs.readFile(pathOfGroupInclude, 'utf8');
   }
+  if (!includeFileContent) {
+    throw new Error(`include file ${include} not found, please check your path`);
+  }
   const includeConfigs = YAML.parse(includeFileContent);
+  if (!includeConfigs) {
+    return [];
+  }
   for (const ic of includeConfigs) {
-    const ickey = `${ic.bridge}${ic.symbol}${ic.type}`;
-    if (registers.findIndex(item => `${item.bridge}${item.symbol}${item.type}` === ickey) > -1) {
+    const ickey = `${ic.bridge}${ic.symbol}${ic.type}`.toUpperCase();
+    if (registers.findIndex(item => `${item.bridge}${item.symbol}${item.type}`.toUpperCase() === ickey) > -1) {
       throw new Error(`duplicated config {bridge: ${ic.bridge}, symbol: ${ic.symbol}, type: ${ic.type}}`);
     }
   }
@@ -165,7 +171,12 @@ async function hashRegister(register) {
   keys.sort();
   let merged = '';
   for (const key of keys) {
-    merged += register[key];
+    const rv = register[key];
+    if (typeof rv === 'object') {
+      merged += JSON.stringify(rv);
+    } else {
+      merged += rv;
+    }
   }
   const hash = await $`echo "${merged}" | sha256sum | cut -d ' ' -f1`;
   return {
