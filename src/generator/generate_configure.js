@@ -26,7 +26,7 @@ export async function generate(options) {
 }
 
 async function generateWithGroup(options, group) {
-  const bridgeConfigRaw = await fs.readFile(arg.datapath(`/bridges.${group}.yml`), 'utf8');
+  const bridgeConfigRaw = await fs.readFile(arg.datapath(`/src/bridges.${group}.yml`), 'utf8');
   const bridgeConfig = YAML.parse(bridgeConfigRaw);
   const configure = bridgeConfig.configure;
   await refactorConfig({configure, group});
@@ -71,12 +71,12 @@ async function refactorConfig(options) {
       includeFileContent = await fs.readFile(include, 'utf8');
     }
     // check path from datapath
-    const pathOfIncludeFromDataPath = arg.datapath(include);
+    const pathOfIncludeFromDataPath = arg.datapath(`/src/${include}`);
     if (fs.existsSync(pathOfIncludeFromDataPath)) {
       includeFileContent = await fs.readFile(pathOfIncludeFromDataPath, 'utf8');
     }
     // check group file
-    const pathOfGroupInclude = arg.datapath(`/includes/${group}/configures/${include}`);
+    const pathOfGroupInclude = arg.datapath(`/src/includes/${group}/configures/${include}`);
     if (fs.existsSync(pathOfGroupInclude)) {
       includeFileContent = await fs.readFile(pathOfGroupInclude, 'utf8');
     }

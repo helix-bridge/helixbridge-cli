@@ -44,7 +44,7 @@ export async function register(options) {
 
 
 async function registerWithGroup(options, group) {
-  const bridgeConfigRaw = await fs.readFile(arg.datapath(`/bridges.${group}.yml`), 'utf8');
+  const bridgeConfigRaw = await fs.readFile(arg.datapath(`/src/bridges.${group}.yml`), 'utf8');
   const bridgeConfig = YAML.parse(bridgeConfigRaw);
   const registers = bridgeConfig.registers;
 
@@ -87,12 +87,12 @@ async function refactorConfig(options) {
     includeFileContent = await fs.readFile(include, 'utf8');
   }
   // check path from datapath
-  const pathOfIncludeFromDataPath = arg.datapath(include);
+  const pathOfIncludeFromDataPath = arg.datapath(`/src/${include}`);
   if (fs.existsSync(pathOfIncludeFromDataPath)) {
     includeFileContent = await fs.readFile(pathOfIncludeFromDataPath, 'utf8');
   }
   // check group file
-  const pathOfGroupInclude = arg.datapath(`/includes/${group}/registers/${include}`);
+  const pathOfGroupInclude = arg.datapath(`/src/includes/${group}/registers/${include}`);
   if (fs.existsSync(pathOfGroupInclude)) {
     includeFileContent = await fs.readFile(pathOfGroupInclude, 'utf8');
   }
