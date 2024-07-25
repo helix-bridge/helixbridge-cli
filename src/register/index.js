@@ -150,18 +150,22 @@ async function handle(options) {
     return;
   }
 
-  await safe.init(options);
-  switch (register.type) {
-    case 'lnv3':
-      await lnv3.register(options);
-      break;
-    case 'lnv2-default':
-      await lnv2Default.register(options);
-      break;
-    case 'lnv2-opposite':
-      await lnv2Opposite.register(options);
-      break;
+  const accepted = arg.option('accept');
+  if (accepted) {
+    await safe.init(options);
+    switch (register.type) {
+      case 'lnv3':
+        await lnv3.register(options);
+        break;
+      case 'lnv2-default':
+        await lnv2Default.register(options);
+        break;
+      case 'lnv2-opposite':
+        await lnv2Opposite.register(options);
+        break;
+    }
   }
+
   await ensureLock(ensureLockOptions, true);
   console.log(chalk.green(`the bridge ${_identifyRegisterName(register)} registered`));
 }

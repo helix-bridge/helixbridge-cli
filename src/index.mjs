@@ -15,6 +15,7 @@ helixbridge
                       helixbridge register
                         --group=mainnet
                         --datadir=/path/to/config
+                        --accept
 
   encrypt             encrypt a private key
                       helixbridge encrypt
