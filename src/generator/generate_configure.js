@@ -76,7 +76,7 @@ async function refactorConfig(options) {
       includeFileContent = await fs.readFile(pathOfIncludeFromDataPath, 'utf8');
     }
     // check group file
-    const pathOfGroupInclude = arg.datapath(`/src/includes/${group}/configures/${include}`);
+    const pathOfGroupInclude = arg.datapath(`/src/includes/${group}/bridges/${include}`);
     if (fs.existsSync(pathOfGroupInclude)) {
       includeFileContent = await fs.readFile(pathOfGroupInclude, 'utf8');
     }
@@ -97,6 +97,47 @@ async function refactorConfig(options) {
     nbdgs.push(...includeConfigs);
   }
   configure.bridges = nbdgs;
+
+
+  const nrnds = [];
+  for (const rpcnode of configure.rpcnodes) {
+    const include = rpcnode.include;
+    if (!include) {
+      nrnds.push(rpcnode);
+      continue;
+    }
+    const keys = Object.keys(rpcnode);
+    if (keys.length > 1) {
+      throw new Error(`include mode please do not add other fields: [${keys.join(', ')}]`)
+    }
+
+    let includeFileContent;
+    if (fs.existsSync(include)) {
+      includeFileContent = await fs.readFile(include, 'utf8');
+    }
+    // check path from datapath
+    const pathOfIncludeFromDataPath = arg.datapath(`/src/${include}`);
+    if (fs.existsSync(pathOfIncludeFromDataPath)) {
+      includeFileContent = await fs.readFile(pathOfIncludeFromDataPath, 'utf8');
+    }
+    // check group file
+    const pathOfGroupInclude = arg.datapath(`/src/includes/${group}/nodes/${include}`);
+    if (fs.existsSync(pathOfGroupInclude)) {
+      includeFileContent = await fs.readFile(pathOfGroupInclude, 'utf8');
+    }
+    if (!includeFileContent) {
+      throw new Error(`include file ${include} not found, please check your path`);
+    }
+    const includeConfigs = YAML.parse(includeFileContent);
+    if (!includeConfigs) {
+      continue;
+    }
+    if (configure.rpcnodes.findIndex(item => item.name === includeConfigs.name) > -1) {
+      throw new Error(`duplicated node {name: ${includeConfigs.name}}`);
+    }
+    nrnds.push(includeConfigs);
+  }
+  configure.rpcnodes = nrnds;
 }
 
 async function _fillEncryptedPrivateKey(options) {

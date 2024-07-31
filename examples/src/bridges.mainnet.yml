@@ -21,9 +21,7 @@ configure:
   indexer: https://apollo.helixbridge.app/graphql
   relayGasLimit: 600000
   rpcnodes:
-    - name: arbitrum
-      rpc: https://arb1.arbitrum.io/rpc
-      fixedGasPrice: 10
+    - include: arbitrum.yml
     - name: polygon
       rpc: https://polygon-rpc.com
   bridges:
