@@ -102,13 +102,15 @@ async function registerWithCall(options, callOptions) {
 
 async function registerWithSafe(options, callOptions) {
   const {
-    register, lifecycle, definition,
-    sourceSafeSdk, sourceSafeService, sourceSigner,
+    register, lifecycle, definition, signer,
+    sourceSafeSdk, sourceSafeService,
   } = options;
   const {approveFlags, setFeeFlags, withdrawFlags, sourceDeposit, sourceChainId} = callOptions;
 
   const txApprove = await $`cast calldata ${approveFlags}`;
   const txSetFee = await $`cast calldata ${setFeeFlags}`;
+  const _signerAddress = await $`cast wallet address ${signer}`.quiet();
+  const signerAddress = _signerAddress.stdout.trim();
 
   const p0Transactions = [];
 
@@ -120,7 +122,7 @@ async function registerWithSafe(options, callOptions) {
     });
   }
   p0Transactions.push({
-    to: register.contract,
+    to: lifecycle.contractAddress,
     value: lifecycle.sourceToken.type === 'native'
       ? sourceDeposit.toString()
       : '0',
@@ -132,7 +134,7 @@ async function registerWithSafe(options, callOptions) {
     safeSdk: sourceSafeSdk,
     safeService: sourceSafeService,
     safeAddress: register.sourceSafeWalletAddress ?? register.safeWalletAddress,
-    senderAddress: sourceSigner.address,
+    senderAddress: signerAddress,
     transactions: p0Transactions,
   });
   console.log(

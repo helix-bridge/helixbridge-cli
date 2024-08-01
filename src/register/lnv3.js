@@ -134,11 +134,13 @@ async function registerWithCall(options, callOptions) {
 
 
 async function registerWithSafe(options, callOptions) {
-  const {register, lifecycle, definition, sourceSafeSdk, sourceSafeService, sourceSigner} = options;
+  const {register, lifecycle, signer, definition, sourceSafeSdk, sourceSafeService} = options;
   const {approvalFlags, depositFlags, setFeeFlags, withdrawFlags, sourceDeposit, sourceChainId} = callOptions;
 
   const txApprove = await $`cast calldata ${approvalFlags}`;
   const txSetFee = await $`cast calldata ${setFeeFlags}`;
+  const _signerAddress = await $`cast wallet address ${signer}`.quiet();
+  const signerAddress = _signerAddress.stdout.trim();
 
   const transactions = [];
   if (!tool.isDisableApprove({definition, symbol: register.symbol, chainId: sourceChainId})) {
@@ -178,7 +180,7 @@ async function registerWithSafe(options, callOptions) {
     safeSdk: sourceSafeSdk,
     safeService: sourceSafeService,
     safeAddress: register.sourceSafeWalletAddress ?? register.safeWalletAddress,
-    senderAddress: sourceSigner.address,
+    senderAddress: signerAddress,
     transactions,
   });
   console.log(

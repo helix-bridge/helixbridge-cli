@@ -113,15 +113,8 @@ async function refactorConfig(options) {
   return includeConfigs;
 }
 
-// function _stdRegisterInfo(register, lifecycle) {
-//   const {sourceChain} = lifecycle;
-//   if (!register.contract) {
-//     register.contract = sourceChain.protocol[register.type];
-//   }
-// }
-
 async function handle(options) {
-  const {definition, register} = options;
+  const {register} = options;
   const [sourceChainName, targetChainName] = register.bridge.split('->');
 
   let relayerAddress = register.safeWalletAddress ?? register.sourceSafeWalletAddress;
@@ -158,7 +151,6 @@ async function handle(options) {
     contractAddress: sourceChain.protocol[register.type].toLowerCase(),
     relayerAddress: relayerAddress.toLowerCase(),
   };
-  // _stdRegisterInfo(register, lifecycle);
 
   options.lifecycle = lifecycle;
 

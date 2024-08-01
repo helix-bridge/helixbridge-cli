@@ -6,23 +6,6 @@ import {isDisableApprove} from "../ecosys/tool.js";
 export async function register(options) {
   const {register, lifecycle} = options;
 
-  // const _sourceChainId = await $`cast chain-id --rpc-url=${lifecycle.sourceChainRpc}`;
-  // const _targetChainId = await $`cast chain-id --rpc-url=${lifecycle.targetChainRpc}`;
-  // let _sourceTokenDecimal;
-  // try {
-  //   _sourceTokenDecimal = await $`cast call --rpc-url=${lifecycle.sourceChainRpc} ${register.sourceTokenAddress} 'decimals()()'`;
-  //   _sourceTokenDecimal = _sourceChainId.stdout.trim();
-  // } catch (e) {
-  //   console.log(chalk.yellow(`[warn] can not query decimal from contract(${lifecycle.sourceChainName}): ${e}`));
-  // }
-  // let _targetTokenDecimal;
-  // try {
-  //   _targetTokenDecimal = await $`cast call --rpc-url=${lifecycle.targetChainRpc} ${register.targetTokenAddress} 'decimals()()'`;
-  //   _targetTokenDecimal = _targetTokenDecimal.stdout.trim();
-  // } catch (e) {
-  //   console.log(chalk.yellow(`[warn] can not query decimal from contract(${lifecycle.targetChainName}): ${e}`));
-  // }
-
   const sourceChainId = lifecycle.sourceChain.id;
   const targetChainId = lifecycle.targetChain.id;
   const sourceTokenDecimal = BigInt(lifecycle.sourceToken.decimals);
@@ -164,14 +147,16 @@ async function registerWithCall(options, callOptions) {
 
 async function registerWithSafe(options, callOptions) {
   const {
-    register, lifecycle, definition,
-    sourceSafeSdk, sourceSafeService, sourceSigner,
-    targetSafeSdk, targetSafeService, targetSigner,
+    register, lifecycle, definition, signer,
+    sourceSafeSdk, sourceSafeService,
+    targetSafeSdk, targetSafeService,
   } = options;
   const {approveFlags, depositFlags, setFeeFlags, withdrawFlags, sourceDepositToTarget, targetChainId} = callOptions;
 
   const txApprove = await $`cast calldata ${approveFlags}`;
   const txSetFee = await $`cast calldata ${setFeeFlags}`;
+  const _signerAddress = await $`cast wallet address ${signer}`.quiet();
+  const signerAddress = _signerAddress.stdout.trim();
 
   const p0Transactions = [];
   if (!tool.isDisableApprove({definition, symbol: register.symbol, chainId: targetChainId})) {
@@ -198,7 +183,7 @@ async function registerWithSafe(options, callOptions) {
       safeSdk: targetSafeSdk,
       safeService: targetSafeService,
       safeAddress: register.targetSafeWalletAddress ?? register.safeWalletAddress,
-      senderAddress: targetSigner.address,
+      senderAddress: signerAddress,
       transactions: p0Transactions,
     });
     console.log(
@@ -212,7 +197,7 @@ async function registerWithSafe(options, callOptions) {
 
   const p1Transactions = [
     {
-      to: register.contract,
+      to: lifecycle.contractAddress,
       value: '0',
       data: txSetFee.stdout.trim(),
     },
@@ -220,7 +205,7 @@ async function registerWithSafe(options, callOptions) {
   if (withdrawFlags.length) {
     const txWithdraw = await $`cast calldata ${withdrawFlags}`;
     p1Transactions.push({
-      to: register.contract,
+      to: lifecycle.contractAddress,
       value: '0',
       data: txWithdraw.stdout.trim(),
     });
@@ -231,7 +216,7 @@ async function registerWithSafe(options, callOptions) {
     safeSdk: sourceSafeSdk,
     safeService: sourceSafeService,
     safeAddress: register.sourceSafeWalletAddress ?? register.safeWalletAddress,
-    senderAddress: sourceSigner.address,
+    senderAddress: signerAddress,
     transactions: p1Transactions,
   });
   console.log(

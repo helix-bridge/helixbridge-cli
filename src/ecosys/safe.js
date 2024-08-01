@@ -1,4 +1,4 @@
-import {ethers} from "ethers";
+// import {ethers} from "ethers";
 import Safe from "@safe-global/protocol-kit";
 import SafeApiKit from "@safe-global/api-kit";
 
@@ -13,71 +13,61 @@ export async function init(options) {
   }
   if (register.sourceSafeWalletUrl) {
     let safe;
-    if (cachedSafe[lifecycle.sourceChainName]) {
-      safe = cachedSafe[lifecycle.sourceChainName];
+    if (cachedSafe[lifecycle.sourceChain.code]) {
+      safe = cachedSafe[lifecycle.sourceChain.code];
     } else {
       safe = await initSafe({
         register,
-        chainRpc: lifecycle.sourceChainRpc,
+        chain: lifecycle.sourceChain,
         safeWalletUrl: register.sourceSafeWalletUrl,
         safeWalletAddress: register.safeWalletAddress ?? register.sourceSafeWalletAddress,
         signer,
       });
-      cachedSafe[lifecycle.sourceChainName] = safe;
+      cachedSafe[lifecycle.sourceChain.code] = safe;
     }
 
     options.sourceSafeSdk = safe.safeSdk;
     options.sourceSafeService = safe.safeService;
-    options.sourceProvider = safe.provider;
-    options.sourceNetwork = safe.network;
-    options.sourceSigner = safe.wallet;
+    // options.sourceSigner = safe.wallet;
   }
   if (register.targetSafeWalletUrl) {
     let safe;
-    if (cachedSafe[lifecycle.targetChainName]) {
-      safe = cachedSafe[lifecycle.targetChainName];
+    if (cachedSafe[lifecycle.targetChain.code]) {
+      safe = cachedSafe[lifecycle.targetChain.code];
     } else {
       safe = await initSafe({
         register,
-        chainRpc: lifecycle.targetChainRpc,
+        chain: lifecycle.targetChain,
         safeWalletUrl: register.targetSafeWalletUrl,
         safeWalletAddress: register.safeWalletAddress ?? register.targetSafeWalletAddress,
         signer,
       });
-      cachedSafe[lifecycle.targetChainName] = safe;
+      cachedSafe[lifecycle.targetChain.code] = safe;
     }
 
     options.targetSafeSdk = safe.safeSdk;
     options.targetSafeService = safe.safeService;
-    options.targetProvider = safe.provider;
-    options.targetNetwork = safe.network;
-    options.targetSigner = safe.wallet;
+    // options.targetSigner = safe.wallet;
   }
 }
 
 async function initSafe(options) {
-  const {chainRpc, signer, safeWalletUrl, safeWalletAddress} = options;
-  const provider = new ethers.JsonRpcProvider(chainRpc);
-  const wallet = new ethers.Wallet(signer, provider);
-  const safeSdk = await Safe.init({
-    provider,
+  const {chain, signer, safeWalletUrl, safeWalletAddress} = options;
+  const safeSdk = await Safe.default.init({
+    provider: chain.rpc,
     signer,
     safeAddress: safeWalletAddress,
   });
 
-  const network = await provider.getNetwork();
-  console.log(`init safe for chain ${network.chainId} with ${safeWalletUrl}`);
-  const safeService =  new SafeApiKit({
-    chainId: network.chainId,
+  console.log(`init safe for chain ${chain.id} with ${safeWalletUrl}`);
+  const safeService =  new SafeApiKit.default({
+    chainId: chain.id,
     txServiceUrl: safeWalletUrl,
     // txServiceUrl: 'https://httpbin.org/anything',
   });
   return {
     safeSdk,
     safeService,
-    provider,
-    network,
-    wallet,
   };
 }
 
