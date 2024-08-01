@@ -3,6 +3,7 @@ import * as safe from '../ecosys/safe.js'
 import * as lnv3 from './lnv3.js'
 import * as lnv2Default from './lnv2_default.js'
 import * as lnv2Opposite from './lnv2_opposite.js'
+import {HelixChain} from "@helixbridge/helixconf";
 
 
 export async function check() {
@@ -72,7 +73,7 @@ async function registerWithGroup(options, group) {
 }
 
 async function refactorConfig(options) {
-  const {definition, registers, register, group} = options;
+  const {registers, register, group} = options;
   const include = register.include;
   if (!include) {
     return [];
@@ -112,33 +113,54 @@ async function refactorConfig(options) {
   return includeConfigs;
 }
 
+// function _stdRegisterInfo(register, lifecycle) {
+//   const {sourceChain} = lifecycle;
+//   if (!register.contract) {
+//     register.contract = sourceChain.protocol[register.type];
+//   }
+// }
+
 async function handle(options) {
   const {definition, register} = options;
   const [sourceChainName, targetChainName] = register.bridge.split('->');
-  const sourceChainRpc = definition.rpc[sourceChainName];
-  const targetChainRpc = definition.rpc[targetChainName];
-  if (!sourceChainRpc) {
-    console.log(chalk.red(`unidentified chain: ${sourceChainName}`));
-    process.exit(1);
-  }
-  if (!targetChainRpc) {
-    console.log(chalk.red(`unidentified chain: ${targetChainName}`));
-    process.exit(1);
-  }
 
   let relayerAddress = register.safeWalletAddress ?? register.sourceSafeWalletAddress;
   if (!relayerAddress) {
     const _walletAddress = await $`cast wallet address ${options.signer}`.quiet();
     relayerAddress = _walletAddress.stdout.trim();
   }
+  const sourceChain = HelixChain.get(sourceChainName);
+  const targetChain = HelixChain.get(targetChainName);
+  if (!sourceChain) {
+    console.log(chalk.red(`unidentified chain: ${sourceChainName}`));
+    process.exit(1);
+  }
+  if (!targetChain) {
+    console.log(chalk.red(`unidentified chain: ${targetChainName}`));
+    process.exit(1);
+  }
+  const sourceToken = sourceChain.token(register.symbol);
+  const targetToken = targetChain.token(register.symbol);
+  if (!sourceToken) {
+    console.log(chalk.red(`unidentified token: ${sourceChainName}::${register.symbol}`));
+    process.exit(1);
+  }
+  if (!targetToken) {
+    console.log(chalk.red(`unidentified token: ${targetChainName}::${register.symbol}`));
+    process.exit(1);
+  }
 
-  options.lifecycle = {
-    sourceChainName,
-    targetChainName,
-    sourceChainRpc,
-    targetChainRpc,
+  const lifecycle = {
+    sourceChain,
+    targetChain,
+    sourceToken,
+    targetToken,
+    contractAddress: sourceChain.protocol[register.type].toLowerCase(),
     relayerAddress: relayerAddress.toLowerCase(),
   };
+  // _stdRegisterInfo(register, lifecycle);
+
+  options.lifecycle = lifecycle;
 
   const hash = await hashRegister(register);
   const ensureLockOptions = {
@@ -177,9 +199,9 @@ async function hashRegister(register) {
   for (const key of keys) {
     const rv = register[key];
     if (typeof rv === 'object') {
-      merged += JSON.stringify(rv);
+      merged += JSON.stringify(rv).toLowerCase();
     } else {
-      merged += rv;
+      merged += rv.toString().toLowerCase();
     }
   }
   const hash = await $`echo "${merged}" | sha256sum | cut -d ' ' -f1`;

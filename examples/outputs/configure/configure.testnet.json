@@ -3,13 +3,14 @@
   "relayGasLimit": 600000,
   "rpcnodes": [
     {
+      "name": "arbitrum-sepolia",
+      "fixedGasPrice": 10,
+      "rpc": "https://public.stackup.sh/api/v1/node/arbitrum-sepolia"
+    },
+    {
       "name": "sepolia",
       "fixedGasPrice": 10,
       "rpc": "https://ethereum-sepolia-rpc.publicnode.com"
-    },
-    {
-      "name": "arbitrum-sepolia",
-      "rpc": "https://arbitrum-sepolia.blockpi.network/v1/rpc/public"
     }
   ],
   "bridges": [

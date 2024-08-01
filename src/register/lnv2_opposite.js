@@ -3,25 +3,11 @@ import * as arg from "../ecosys/arg.js";
 import * as tool from "../ecosys/tool.js";
 
 export async function register(options) {
-  const {register, lifecycle, definition} = options;
+  const {register, lifecycle} = options;
 
-  const _sourceChainId = await $`cast chain-id --rpc-url=${lifecycle.sourceChainRpc}`;
-  const _targetChainId = await $`cast chain-id --rpc-url=${lifecycle.targetChainRpc}`;
-  const sourceChainId = _sourceChainId.stdout.trim();
-  const targetChainId = _targetChainId.stdout.trim();
-  let _sourceTokenDecimal;
-  try {
-    _sourceTokenDecimal = await $`cast call --rpc-url=${lifecycle.sourceChainRpc} ${register.sourceTokenAddress} 'decimals()()'`
-    _sourceTokenDecimal = _sourceTokenDecimal.stdout.trim();
-  } catch (e) {
-    console.log(chalk.yellow(`[warn] can not query decimal from contract(${lifecycle.sourceChainName}): ${e}`));
-  }
-  const sourceTokenDecimal = tool.pickDecimal({
-    definition,
-    decimal: _sourceTokenDecimal,
-    chain: lifecycle.sourceChainName,
-    symbol: register.symbol,
-  });
+  const sourceChainId = lifecycle.sourceChain.id;
+  const targetChainId = lifecycle.targetChain.id;
+  const sourceTokenDecimal = BigInt(lifecycle.sourceToken.decimals);
 
   const approve = BigInt(register.approve) * (10n ** sourceTokenDecimal);
   const baseFee = tool.floatToBigInt(register.baseFee, sourceTokenDecimal);
@@ -31,7 +17,7 @@ export async function register(options) {
   const bridgeInfoRecord = await tool.queryBridgeInfoRecord({
     definition: options.definition,
     lifecycle,
-    sourceTokenAddress: register.sourceTokenAddress,
+    sourceTokenAddress: lifecycle.sourceToken.address,
     version: 'lnv2',
     bridge: 'lnv2-opposite',
   });
@@ -51,14 +37,14 @@ export async function register(options) {
 
   const approveFlags = [
     'approve(address,uint256)(bool)',
-    register.contract,
+    lifecycle.contractAddress,
     approve,
   ];
   const setFeeFlags = [
     'updateProviderFeeAndMargin(uint256,address,address,uint112,uint112,uint16)()',
     targetChainId,
-    register.sourceTokenAddress,
-    register.targetTokenAddress,
+    lifecycle.sourceToken.address,
+    lifecycle.targetToken.address,
     sourceDeposit,
     baseFee,
     liquidityFeeRate,
@@ -86,13 +72,13 @@ async function registerWithCall(options, callOptions) {
   const {register, lifecycle, definition, signer} = options;
   const {approveFlags, setFeeFlags, withdrawFlags, sourceDeposit, sourceChainId} = callOptions;
   const sourceSendFlags = [
-    `--rpc-url=${lifecycle.sourceChainRpc}`,
+    `--rpc-url=${lifecycle.sourceChain.rpc}`,
   ];
 
   if (!tool.isDisableApprove({definition, symbol: register.symbol, chainId: sourceChainId})) {
     approveFlags.unshift(...[
       ...sourceSendFlags,
-      register.sourceTokenAddress,
+      lifecycle.sourceToken.address,
     ]);
     await $`echo cast send ${approveFlags}`;
     approveFlags.unshift(`--private-key=${signer}`);
@@ -100,12 +86,12 @@ async function registerWithCall(options, callOptions) {
     console.log(txApprove.stdout);
   }
 
-  const setFeeFlagsValue = tool.isNativeToken({definition, symbol: register.symbol, chainId: sourceChainId})
+  const setFeeFlagsValue = lifecycle.sourceToken.type === 'native'
     ? sourceDeposit
     : '0';
   setFeeFlags.unshift(...[
     ...sourceSendFlags,
-    register.contract,
+    lifecycle.contractAddress,
     `--value=${setFeeFlagsValue}`,
   ]);
   await $`echo cast send ${setFeeFlags}`;
@@ -128,14 +114,14 @@ async function registerWithSafe(options, callOptions) {
 
   if (!tool.isDisableApprove({definition, symbol: register.symbol, chainId: sourceChainId})) {
     p0Transactions.push({
-      to: register.sourceTokenAddress,
+      to: lifecycle.sourceToken.address,
       value: '0',
       data: txApprove.stdout.trim(),
     });
   }
   p0Transactions.push({
     to: register.contract,
-    value: tool.isNativeToken({definition, symbol: register.symbol, chainId: sourceChainId})
+    value: lifecycle.sourceToken.type === 'native'
       ? sourceDeposit.toString()
       : '0',
     data: txSetFee.stdout.trim(),
@@ -151,7 +137,7 @@ async function registerWithSafe(options, callOptions) {
   });
   console.log(
     chalk.green('proposed register transaction to'),
-    `${lifecycle.sourceChainName}: ${register.safeWalletAddress ?? register.sourceSafeWalletAddress} (safe)`
+    `${lifecycle.sourceChain.code}: ${register.safeWalletAddress ?? register.sourceSafeWalletAddress} (safe)`
   );
   if (p1 && arg.isDebug()) {
     console.log(p1);

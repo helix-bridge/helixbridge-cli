@@ -1,0 +1,18 @@
+{
+  "register": {
+    "bridge": "polygon->arbitrum",
+    "symbol": "usdt",
+    "type": "lnv3",
+    "baseFee": 0.1,
+    "liquidityFeeRate": 0.1,
+    "transferLimit": 2000,
+    "deposit": 30,
+    "approve": 10000000000000,
+    "safeWalletAddress": "0x000000000Bb6a011dB294ce3F3423f00EAc4959e",
+    "sourceSafeWalletUrl": "https://safe-transaction-polygon.safe.global/api"
+  },
+  "hash": {
+    "origin": "100000000000000.1polygon->arbitrum300.10x000000000bb6a011db294ce3f3423f00eac4959ehttps://safe-transaction-polygon.safe.global/apiusdt2000lnv3",
+    "hash": "b2e491c71badc73d4855b8a9d977bde0287cfe955b0d1bf27364640e8e952960"
+  }
+}

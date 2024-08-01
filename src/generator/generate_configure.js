@@ -1,4 +1,5 @@
 import * as arg from "../ecosys/arg.js";
+import {HelixChain} from "@helixbridge/helixconf";
 
 
 export async function check() {
@@ -157,10 +158,12 @@ async function _fillRpcnodes(options) {
   const bridges = configure.bridges;
   for (const bridge of bridges) {
     const [sourceChainName, targetChainName] = bridge.direction.split('->');
-    const sourceChainRpc = definition.rpc[sourceChainName];
-    const targetChainRpc = definition.rpc[targetChainName];
-    __updateRpcnodesRpc(customRpcNodes, {name: sourceChainName, rpc: sourceChainRpc});
-    __updateRpcnodesRpc(customRpcNodes, {name: targetChainName, rpc: targetChainRpc});
+    const [sourceChain, targetChain] = [
+      HelixChain.get(sourceChainName),
+      HelixChain.get(targetChainName),
+    ];
+    __updateRpcnodesRpc(customRpcNodes, {name: sourceChainName, rpc: sourceChain.rpc});
+    __updateRpcnodesRpc(customRpcNodes, {name: targetChainName, rpc: targetChain.rpc});
   }
   configure.rpcnodes = customRpcNodes;
 }
