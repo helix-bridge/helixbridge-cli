@@ -1,5 +1,6 @@
 // import {ethers} from "ethers";
 import Safe from "@safe-global/protocol-kit";
+// import {EthersAdapter} from "@safe-global/protocol-kit";
 import SafeApiKit from "@safe-global/api-kit";
 
 
@@ -58,6 +59,14 @@ async function initSafe(options) {
     signer,
     safeAddress: safeWalletAddress,
   });
+
+  // const provider = new ethers.JsonRpcProvider(chain.rpc);
+  // const wallet = new ethers.Wallet(signer, provider);
+  // const ethAdapter = new EthersAdapter({
+  //   ethers,
+  //   signerOrProvider: wallet,
+  // });
+  // const safeSdk = await Safe.default.create({ethAdapter: ethAdapter, safeAddress: safeWalletAddress});
 
   console.log(`init safe for chain ${chain.id} with ${safeWalletUrl}`);
   const safeService =  new SafeApiKit.default({

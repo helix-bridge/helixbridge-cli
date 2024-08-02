@@ -107,20 +107,21 @@ async function registerWithSafe(options, callOptions) {
   } = options;
   const {approveFlags, setFeeFlags, withdrawFlags, sourceDeposit, sourceChainId} = callOptions;
 
-  const txApprove = await $`cast calldata ${approveFlags}`;
-  const txSetFee = await $`cast calldata ${setFeeFlags}`;
   const _signerAddress = await $`cast wallet address ${signer}`.quiet();
   const signerAddress = _signerAddress.stdout.trim();
 
   const p0Transactions = [];
 
   if (!tool.isDisableApprove({definition, symbol: register.symbol, chainId: sourceChainId})) {
+    const txApprove = await $`cast calldata ${approveFlags}`;
     p0Transactions.push({
       to: lifecycle.sourceToken.address,
       value: '0',
       data: txApprove.stdout.trim(),
     });
   }
+
+  const txSetFee = await $`cast calldata ${setFeeFlags}`;
   p0Transactions.push({
     to: lifecycle.contractAddress,
     value: lifecycle.sourceToken.type === 'native'

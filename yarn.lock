@@ -146,7 +146,7 @@
 
 "@safe-global/api-kit@^2.4.3":
   version "2.4.3"
-  resolved "https://registry.npmjs.org/@safe-global/api-kit/-/api-kit-2.4.3.tgz"
+  resolved "https://registry.yarnpkg.com/@safe-global/api-kit/-/api-kit-2.4.3.tgz#5bde12efa15c98e96037880718d86a00d155f7d1"
   integrity sha512-kIbRMYWQiVUqIpu65GYTiHQgYDne9CZJ7JREmtrLQh11n3K7+LxNmHT6HW1VfVj/5Es8fAQlwrBukbTy0AQwLw==
   dependencies:
     "@safe-global/protocol-kit" "^4.0.3"

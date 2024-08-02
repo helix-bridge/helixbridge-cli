@@ -102,6 +102,7 @@ async function refactorConfig(options) {
   }
   const includeConfigs = YAML.parse(includeFileContent);
   if (!includeConfigs) {
+    console.log(`not found include file ${include}`);
     return [];
   }
   for (const ic of includeConfigs) {
@@ -115,6 +116,10 @@ async function refactorConfig(options) {
 
 async function handle(options) {
   const {register} = options;
+  if (!register.bridge) {
+    return;
+  }
+
   const [sourceChainName, targetChainName] = register.bridge.split('->');
 
   let relayerAddress = register.safeWalletAddress ?? register.sourceSafeWalletAddress;

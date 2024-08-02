@@ -1,7 +1,6 @@
 import * as safe from "../ecosys/safe.js";
 import * as arg from "../ecosys/arg.js";
 import * as tool from '../ecosys/tool.js';
-import {isDisableApprove} from "../ecosys/tool.js";
 
 export async function register(options) {
   const {register, lifecycle} = options;
@@ -177,6 +176,7 @@ async function registerWithSafe(options, callOptions) {
     });
   }
 
+  console.log(p0Transactions);
   if (p0Transactions.length) {
     const p0 = await safe.propose({
       definition,
