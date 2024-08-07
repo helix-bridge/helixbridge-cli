@@ -42,7 +42,7 @@ async function generateWithGroup(options, group) {
   };
 
   await _fillEncryptedPrivateKey(fillOptions);
-  await _fillRpcnodes(fillOptions);
+  // await _fillRpcnodes(fillOptions);
 
   const outputJson = JSON.stringify(configure, null, 2);
   await fs.writeFile(storeFile, outputJson);
@@ -152,30 +152,30 @@ async function _fillEncryptedPrivateKey(options) {
   }
 }
 
-async function _fillRpcnodes(options) {
-  const {configure, definition} = options;
-  const customRpcNodes = configure.rpcnodes ?? [];
-  const bridges = configure.bridges;
-  for (const bridge of bridges) {
-    const [sourceChainName, targetChainName] = bridge.direction.split('->');
-    const [sourceChain, targetChain] = [
-      HelixChain.get(sourceChainName),
-      HelixChain.get(targetChainName),
-    ];
-    __updateRpcnodesRpc(customRpcNodes, {name: sourceChainName, rpc: sourceChain.rpc});
-    __updateRpcnodesRpc(customRpcNodes, {name: targetChainName, rpc: targetChain.rpc});
-  }
-  configure.rpcnodes = customRpcNodes;
-}
-
-function __updateRpcnodesRpc(rpcnodes, detected = {name, rpc}) {
-  for (const rpcnode of rpcnodes) {
-    if (rpcnode.name !== detected.name) {
-      continue;
-    }
-    if (rpcnode.rpc) return;
-    rpcnode.rpc = detected.rpc;
-    return;
-  }
-  rpcnodes.push(detected);
-}
+// async function _fillRpcnodes(options) {
+//   const {configure, definition} = options;
+//   const customRpcNodes = configure.rpcnodes ?? [];
+//   const bridges = configure.bridges;
+//   for (const bridge of bridges) {
+//     const [sourceChainName, targetChainName] = bridge.direction.split('->');
+//     const [sourceChain, targetChain] = [
+//       HelixChain.get(sourceChainName),
+//       HelixChain.get(targetChainName),
+//     ];
+//     __updateRpcnodesRpc(customRpcNodes, {name: sourceChainName, rpc: sourceChain.rpc});
+//     __updateRpcnodesRpc(customRpcNodes, {name: targetChainName, rpc: targetChain.rpc});
+//   }
+//   configure.rpcnodes = customRpcNodes;
+// }
+//
+// function __updateRpcnodesRpc(rpcnodes, detected = {name, rpc}) {
+//   for (const rpcnode of rpcnodes) {
+//     if (rpcnode.name !== detected.name) {
+//       continue;
+//     }
+//     if (rpcnode.rpc) return;
+//     rpcnode.rpc = detected.rpc;
+//     return;
+//   }
+//   rpcnodes.push(detected);
+// }

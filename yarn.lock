@@ -110,10 +110,10 @@
     "@ethersproject/rlp" "^5.7.0"
     "@ethersproject/signing-key" "^5.7.0"
 
-"@helixbridge/helixconf@^1.1.7":
-  version "1.1.7"
-  resolved "https://registry.yarnpkg.com/@helixbridge/helixconf/-/helixconf-1.1.7.tgz#a2d33b0a8aa03c704aa2c0e49c558bc57572e28d"
-  integrity sha512-1FIxGAzK4uvfz9sxmMOIvF9+e/CurUoxFgqHxSi5zIORfcp8iIZGCPIZCwgXAxxtAAz5GcrDU8STsRqcCGmzOw==
+"@helixbridge/helixconf@^1.1.10":
+  version "1.1.10"
+  resolved "https://registry.yarnpkg.com/@helixbridge/helixconf/-/helixconf-1.1.10.tgz#9c1a2781a19cbb47272a799dcd9865c4b31f5145"
+  integrity sha512-wDRCsWKo0dmiMPCufD9qI+z/7fwZAEDYDNVmn6ttnBokNK0bVH5xSBKOVuhc5colHiiYuUlllWXYt1Yabi6cnQ==
 
 "@noble/curves@1.2.0":
   version "1.2.0"
