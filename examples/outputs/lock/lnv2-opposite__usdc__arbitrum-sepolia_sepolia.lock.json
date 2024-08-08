@@ -1,0 +1,15 @@
+{
+  "register": {
+    "bridge": "arbitrum-sepolia->sepolia",
+    "symbol": "usdc",
+    "type": "lnv2-opposite",
+    "baseFee": 10,
+    "liquidityFeeRate": 0.1,
+    "deposit": 1000,
+    "approve": 10000000000000
+  },
+  "hash": {
+    "origin": "1000000000000010arbitrum-sepolia->sepolia10000.1usdclnv2-opposite",
+    "hash": "ac8ccf6837bc742cdd84269ecf0d81ab66c58db681a8db2e266d084238898f4d"
+  }
+}

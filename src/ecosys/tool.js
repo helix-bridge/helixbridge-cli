@@ -12,31 +12,23 @@ export function floatToBigInt(value, decimal) {
     : fixedValue * (10n ** decimal);
 }
 
-export function pickIndexEndpoint(options, chainName) {
-  const {definition} = options;
-  const indexerDefinition = definition.indexer;
-  const keys = Object.keys(indexerDefinition);
-  for (const key of keys) {
-    const itemOfIndexer = indexerDefinition[key];
-    if (itemOfIndexer.chains.indexOf(chainName) > -1) {
-      return itemOfIndexer.endpoint;
-    }
-  }
-  console.log(`not found index endpoint for chain: ${chainName}`);
-  process.exit(1);
+export function pickIndexEndpoint(chain) {
+  return chain._network === 'mainnets'
+    ? 'https://apollo.helixbridge.app/graphql'
+    : 'https://apollo-test.helixbridge.app/graphql';
 }
 
-export function pickDecimal(options = {definition, decimal, chain, symbol}) {
-  const {definition, decimal, chain, symbol} = options;
-  if (decimal && decimal.length > 2) {
-    return BigInt(decimal);
-  }
-  const definitionDecimal = definition.decimal;
-  const symbolDecimal = definitionDecimal[symbol];
-  const chainDecimal = symbolDecimal[chain];
-  const symbolDefaultDecimal = symbolDecimal['generic'];
-  return BigInt(chainDecimal ? chainDecimal : symbolDefaultDecimal);
-}
+// export function pickDecimal(options = {definition, decimal, chain, symbol}) {
+//   const {definition, decimal, chain, symbol} = options;
+//   if (decimal && decimal.length > 2) {
+//     return BigInt(decimal);
+//   }
+//   const definitionDecimal = definition.decimal;
+//   const symbolDecimal = definitionDecimal[symbol];
+//   const chainDecimal = symbolDecimal[chain];
+//   const symbolDefaultDecimal = symbolDecimal['generic'];
+//   return BigInt(chainDecimal ? chainDecimal : symbolDefaultDecimal);
+// }
 
 export function isDisableApprove(options = {definition, symbol, chainId}) {
   const {definition, symbol, chainId} = options;
@@ -46,12 +38,12 @@ export function isDisableApprove(options = {definition, symbol, chainId}) {
   return ix !== -1;
 }
 
-export function isNativeToken(options = {definition, symbol, chainId}) {
-  const {definition, symbol, chainId} = options;
-  const nativetoken = definition.nativetoken[chainId];
-  if (!nativetoken || !symbol) return false;
-  return nativetoken.toLowerCase() === symbol.toLowerCase();
-}
+// export function isNativeToken(options = {definition, symbol, chainId}) {
+//   const {definition, symbol, chainId} = options;
+//   const nativetoken = definition.nativetoken[chainId];
+//   if (!nativetoken || !symbol) return false;
+//   return nativetoken.toLowerCase() === symbol.toLowerCase();
+// }
 
 export async function queryBridgeInfoRecord(options = {lifecycle, version, sourceTokenAddress, bridge}) {
   const {lifecycle, version, sourceTokenAddress, bridge} = options;
@@ -86,13 +78,13 @@ export async function queryBridgeInfoRecord(options = {lifecycle, version, sourc
     variables: {
       page: 0,
       row: 100,
-      fromChain: lifecycle.sourceChainName,
-      toChain: lifecycle.targetChainName,
+      fromChain: lifecycle.sourceChain.code,
+      toChain: lifecycle.targetChain.code,
       relayer: lifecycle.relayerAddress,
       version,
     }
   };
-  const indexEndpoint = await pickIndexEndpoint(options, lifecycle.targetChainName);
+  const indexEndpoint = await pickIndexEndpoint(lifecycle.targetChain);
   const responseLnBridgeInfos = await fetch(indexEndpoint, {
     method: 'post',
     body: JSON.stringify(gqlBody),
@@ -101,7 +93,7 @@ export async function queryBridgeInfoRecord(options = {lifecycle, version, sourc
   const lnBridgeInfos = await responseLnBridgeInfos.json();
   const [bridgeInfoRecord] = lnBridgeInfos.data.queryLnBridgeRelayInfos.records.filter(item => {
     if (item.bridge !== bridge) return false;
-    if (item.sendToken !== sourceTokenAddress) return false;
+    if (item.sendToken.toLowerCase() !== sourceTokenAddress.toLowerCase()) return false;
     return true;
   });
   return bridgeInfoRecord;

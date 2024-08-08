@@ -1,0 +1,18 @@
+{
+  "register": {
+    "bridge": "sepolia->arbitrum-sepolia",
+    "symbol": "usdc",
+    "type": "lnv3",
+    "baseFee": 10,
+    "liquidityFeeRate": 0.1,
+    "transferLimit": 100000,
+    "deposit": 1000,
+    "approve": 10000000000000,
+    "safeWalletAddress": "0x086962e147c82C037872fa87523faa139D38ee61",
+    "sourceSafeWalletUrl": "https://safe-transaction-sepolia.safe.global/api"
+  },
+  "hash": {
+    "origin": "1000000000000010sepolia->arbitrum-sepolia10000.10x086962e147c82c037872fa87523faa139d38ee61https://safe-transaction-sepolia.safe.global/apiusdc100000lnv3",
+    "hash": "e6496d5df4045a2809709d2ccfc773526c51eb3ff94baf4f5e8b864af417e848"
+  }
+}

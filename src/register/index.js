@@ -3,6 +3,7 @@ import * as safe from '../ecosys/safe.js'
 import * as lnv3 from './lnv3.js'
 import * as lnv2Default from './lnv2_default.js'
 import * as lnv2Opposite from './lnv2_opposite.js'
+import {HelixChain} from "@helixbridge/helixconf";
 
 
 export async function check() {
@@ -44,7 +45,7 @@ export async function register(options) {
 
 
 async function registerWithGroup(options, group) {
-  const bridgeConfigRaw = await fs.readFile(arg.datapath(`/bridges.${group}.yml`), 'utf8');
+  const bridgeConfigRaw = await fs.readFile(arg.datapath(`/src/bridges.${group}.yml`), 'utf8');
   const bridgeConfig = YAML.parse(bridgeConfigRaw);
   const registers = bridgeConfig.registers;
 
@@ -72,7 +73,7 @@ async function registerWithGroup(options, group) {
 }
 
 async function refactorConfig(options) {
-  const {definition, registers, register, group} = options;
+  const {registers, register, group} = options;
   const include = register.include;
   if (!include) {
     return [];
@@ -87,12 +88,12 @@ async function refactorConfig(options) {
     includeFileContent = await fs.readFile(include, 'utf8');
   }
   // check path from datapath
-  const pathOfIncludeFromDataPath = arg.datapath(include);
+  const pathOfIncludeFromDataPath = arg.datapath(`/src/${include}`);
   if (fs.existsSync(pathOfIncludeFromDataPath)) {
     includeFileContent = await fs.readFile(pathOfIncludeFromDataPath, 'utf8');
   }
   // check group file
-  const pathOfGroupInclude = arg.datapath(`/includes/${group}/registers/${include}`);
+  const pathOfGroupInclude = arg.datapath(`/src/includes/${group}/registers/${include}`);
   if (fs.existsSync(pathOfGroupInclude)) {
     includeFileContent = await fs.readFile(pathOfGroupInclude, 'utf8');
   }
@@ -101,6 +102,7 @@ async function refactorConfig(options) {
   }
   const includeConfigs = YAML.parse(includeFileContent);
   if (!includeConfigs) {
+    console.log(`not found include file ${include}`);
     return [];
   }
   for (const ic of includeConfigs) {
@@ -113,32 +115,49 @@ async function refactorConfig(options) {
 }
 
 async function handle(options) {
-  const {definition, register} = options;
+  const {register} = options;
+  if (!register.bridge) {
+    return;
+  }
+
   const [sourceChainName, targetChainName] = register.bridge.split('->');
-  const sourceChainRpc = definition.rpc[sourceChainName];
-  const targetChainRpc = definition.rpc[targetChainName];
-  if (!sourceChainRpc) {
-    console.log(chalk.red(`unidentified chain: ${sourceChainName}`));
-    process.exit(1);
-  }
-  if (!targetChainRpc) {
-    console.log(chalk.red(`unidentified chain: ${targetChainName}`));
-    process.exit(1);
-  }
 
   let relayerAddress = register.safeWalletAddress ?? register.sourceSafeWalletAddress;
   if (!relayerAddress) {
     const _walletAddress = await $`cast wallet address ${options.signer}`.quiet();
     relayerAddress = _walletAddress.stdout.trim();
   }
+  const sourceChain = HelixChain.get(sourceChainName);
+  const targetChain = HelixChain.get(targetChainName);
+  if (!sourceChain) {
+    console.log(chalk.red(`unidentified chain: ${sourceChainName}`));
+    process.exit(1);
+  }
+  if (!targetChain) {
+    console.log(chalk.red(`unidentified chain: ${targetChainName}`));
+    process.exit(1);
+  }
+  const sourceToken = sourceChain.token(register.symbol);
+  const targetToken = targetChain.token(register.symbol);
+  if (!sourceToken) {
+    console.log(chalk.red(`unidentified token: ${sourceChainName}::${register.symbol}`));
+    process.exit(1);
+  }
+  if (!targetToken) {
+    console.log(chalk.red(`unidentified token: ${targetChainName}::${register.symbol}`));
+    process.exit(1);
+  }
 
-  options.lifecycle = {
-    sourceChainName,
-    targetChainName,
-    sourceChainRpc,
-    targetChainRpc,
+  const lifecycle = {
+    sourceChain,
+    targetChain,
+    sourceToken,
+    targetToken,
+    contractAddress: sourceChain.protocol[register.type].toLowerCase(),
     relayerAddress: relayerAddress.toLowerCase(),
   };
+
+  options.lifecycle = lifecycle;
 
   const hash = await hashRegister(register);
   const ensureLockOptions = {
@@ -150,18 +169,22 @@ async function handle(options) {
     return;
   }
 
-  await safe.init(options);
-  switch (register.type) {
-    case 'lnv3':
-      await lnv3.register(options);
-      break;
-    case 'lnv2-default':
-      await lnv2Default.register(options);
-      break;
-    case 'lnv2-opposite':
-      await lnv2Opposite.register(options);
-      break;
+  const accepted = arg.option('accept');
+  if (accepted) {
+    await safe.init(options);
+    switch (register.type) {
+      case 'lnv3':
+        await lnv3.register(options);
+        break;
+      case 'lnv2-default':
+        await lnv2Default.register(options);
+        break;
+      case 'lnv2-opposite':
+        await lnv2Opposite.register(options);
+        break;
+    }
   }
+
   await ensureLock(ensureLockOptions, true);
   console.log(chalk.green(`the bridge ${_identifyRegisterName(register)} registered`));
 }
@@ -173,9 +196,9 @@ async function hashRegister(register) {
   for (const key of keys) {
     const rv = register[key];
     if (typeof rv === 'object') {
-      merged += JSON.stringify(rv);
+      merged += JSON.stringify(rv).toLowerCase();
     } else {
-      merged += rv;
+      merged += rv.toString().toLowerCase();
     }
   }
   const hash = await $`echo "${merged}" | sha256sum | cut -d ' ' -f1`;
@@ -188,7 +211,7 @@ async function hashRegister(register) {
 async function ensureLock(options, write = false) {
   const {register} = options;
   const irn = _identifyRegisterName(register);
-  const LOCK_PATH = arg.datapath('/lock');
+  const LOCK_PATH = arg.datapath('/outputs/lock');
   const lockName = `${LOCK_PATH}/${irn}.lock.json`;
   if (write) {
     await $`mkdir -p ${LOCK_PATH}`.quiet();

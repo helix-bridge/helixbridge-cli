@@ -1,0 +1,34 @@
+
+registers:
+  - include: arbitrum-sepolia-sepolia.yml
+  - bridge: sepolia->arbitrum-sepolia
+    symbol: usdc
+    type: lnv2-default
+    baseFee: 10
+    liquidityFeeRate: 0.1
+    deposit: 1000
+    approve: 10000000000000
+    safeWalletAddress: '0x086962e147c82C037872fa87523faa139D38ee61'
+    sourceSafeWalletUrl: 'https://safe-transaction-sepolia.safe.global/api'
+    targetSafeWalletUrl: 'https://safe-transaction-arbitrum-sepolia.safe.global/api'
+
+
+configure:
+  indexer: https://apollo.helixbridge.app/graphql
+  relayGasLimit: 600000
+  rpcnodes:
+    - include: arbitrum-sepolia.yml
+    - name: sepolia
+      fixedGasPrice: 10
+  bridges:
+    - include: arbitrum-sepolia-sepolia.yml
+    - direction: sepolia->arbitrum-sepolia
+      feeLimit: 100
+      reorgThreshold: 10
+      bridgeType: lnv3
+      tokens:
+        - symbol: usdc->usdc
+          swapRate: 2300
+          withdrawLiquidityCountThreshold: 10
+
+
