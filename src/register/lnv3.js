@@ -11,7 +11,7 @@ export async function register(options) {
 
   const baseFee = tool.floatToBigInt(register.baseFee, sourceTokenDecimal);
   const liquidityFeeRate = Number(register.liquidityFeeRate) * (10 ** 3);
-  const transferLimit = BigInt(register.transferLimit) * (10n ** sourceTokenDecimal);
+  const transferLimit = tool.floatToBigInt(register.transferLimit, sourceTokenDecimal);
   const approve = BigInt(register.approve) * (10n ** sourceTokenDecimal);
   const deposit = BigInt(register.deposit) * (10n ** sourceTokenDecimal);
 
