@@ -13,7 +13,7 @@ export async function register(options) {
   const approveTargetChain = BigInt(register.approve) * (10n ** targetTokenDecimal);
   const baseFee = tool.floatToBigInt(register.baseFee, sourceTokenDecimal);
   const liquidityFeeRate = Number(register.liquidityFeeRate) * (10 ** 3);
-  const deposit = BigInt(register.deposit) * (10n ** targetTokenDecimal);
+  const deposit = tool.floatToBigInt(register.deposit, targetTokenDecimal);
 
   const bridgeInfoRecord = await tool.queryBridgeInfoRecord({
     definition: options.definition,

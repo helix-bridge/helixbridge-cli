@@ -13,7 +13,7 @@ export async function register(options) {
   const liquidityFeeRate = Number(register.liquidityFeeRate) * (10 ** 3);
   const transferLimit = tool.floatToBigInt(register.transferLimit, sourceTokenDecimal);
   const approve = BigInt(register.approve) * (10n ** sourceTokenDecimal);
-  const deposit = BigInt(register.deposit) * (10n ** sourceTokenDecimal);
+  const deposit = tool.floatToBigInt(register.deposit, sourceTokenDecimal);
 
   const encodedParamForPenaltyReserves = lifecycle.sourceToken.address.toLowerCase()
     + (lifecycle.relayerAddress.toLowerCase().replace('0x', ''));
