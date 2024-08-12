@@ -13,3 +13,5 @@ safepin:
     #gasPrice: 10000000
   534352: # scroll
     safeTxGas: 5000000
+  100: # gnosis
+    safeTxGas: 1000000
