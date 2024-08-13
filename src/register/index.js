@@ -137,8 +137,17 @@ async function handle(options) {
     console.log(chalk.red(`unidentified chain: ${targetChainName}`));
     process.exit(1);
   }
-  const sourceToken = sourceChain.token(register.symbol);
-  const targetToken = targetChain.token(register.symbol);
+  const registerSymbol = register.symbol;
+  let sourceToken;
+  let targetToken;
+  if (registerSymbol.indexOf('->') > -1) {
+    let [st, tt] = registerSymbol.split('->');
+    sourceToken = st;
+    targetToken = tt;
+  } else {
+    sourceToken = sourceChain.token(register.symbol);
+    targetToken = targetChain.token(register.symbol);
+  }
   if (!sourceToken) {
     console.log(chalk.red(`unidentified token: ${sourceChainName}::${register.symbol}`));
     process.exit(1);
@@ -148,7 +157,7 @@ async function handle(options) {
     process.exit(1);
   }
 
-  const lifecycle = {
+  options.lifecycle = {
     sourceChain,
     targetChain,
     sourceToken,
@@ -156,8 +165,6 @@ async function handle(options) {
     contractAddress: sourceChain.protocol[register.type].toLowerCase(),
     relayerAddress: relayerAddress.toLowerCase(),
   };
-
-  options.lifecycle = lifecycle;
 
   const hash = await hashRegister(register);
   const ensureLockOptions = {
