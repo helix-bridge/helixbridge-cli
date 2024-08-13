@@ -8,10 +8,3 @@ safepin:
   46: # darwinia
     safeTxGas: 613599
     gasPrice: 154000000000
-  42161: # arbitrum
-    safeTxGas: 552730
-    #gasPrice: 10000000
-  534352: # scroll
-    safeTxGas: 5000000
-  100: # gnosis
-    safeTxGas: 0

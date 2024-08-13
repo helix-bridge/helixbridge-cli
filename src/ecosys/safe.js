@@ -96,7 +96,10 @@ export async function propose(options = {definition, safeSdk, safeService, trans
     nonce = remoteNonce;
   }
 
-  let createTransactionOptions = {nonce};
+  let createTransactionOptions = {
+    safeTxGas: 0,
+    nonce,
+  };
   if (safepin) {
     createTransactionOptions = {...createTransactionOptions, ...safepin};
   }
