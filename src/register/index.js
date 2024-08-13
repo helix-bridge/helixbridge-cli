@@ -242,6 +242,8 @@ async function ensureLock(options, write = false) {
 }
 
 function _identifyRegisterName(register) {
-  return `${register.type}__${register.symbol}__${register.bridge.replace('->', '_')}`;
+  const symbol = register.symbol.replace('->', '_');
+  const bridge = register.bridge.replace('->', '_');
+  return `${register.type}__${symbol}__${bridge}`;
 }
 
