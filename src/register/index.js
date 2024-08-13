@@ -142,8 +142,8 @@ async function handle(options) {
   let targetToken;
   if (registerSymbol.indexOf('->') > -1) {
     let [st, tt] = registerSymbol.split('->');
-    sourceToken = st;
-    targetToken = tt;
+    sourceToken = sourceChain.token(st);
+    targetToken = targetChain.token(tt);
   } else {
     sourceToken = sourceChain.token(register.symbol);
     targetToken = targetChain.token(register.symbol);
