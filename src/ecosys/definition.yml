@@ -14,4 +14,4 @@ safepin:
   534352: # scroll
     safeTxGas: 5000000
   100: # gnosis
-    safeTxGas: 5000000
+    safeTxGas: 0
