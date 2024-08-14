@@ -5,10 +5,12 @@ export function absBigInt(n) {
 export function floatToBigInt(value, decimal) {
   const floatStr = value.toString();
   if (!floatStr.includes('.')) {
-    return BigInt(value) * (10n ** decimal);
+    return BigInt(value) * (10n ** BigInt(decimal));
   }
+
   const decimalPlaces = floatStr.split('.')[1].length;
-  return BigInt(value) * (10n ** (decimal - BigInt(decimalPlaces)))
+  const fixedValue = BigInt(value * (10 ** decimalPlaces));
+  return fixedValue * (10n ** (BigInt(decimal) - BigInt(decimalPlaces)))
 }
 
 export function pickIndexEndpoint(chain) {
