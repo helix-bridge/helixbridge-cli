@@ -3,13 +3,12 @@ export function absBigInt(n) {
 }
 
 export function floatToBigInt(value, decimal) {
-  const isFloat = String(value).indexOf('.') > -1;
-  let fixedValue = isFloat
-    ? BigInt(Number(value.toFixed(2)) * (10 ** 2))
-    : BigInt(value);
-  return isFloat
-    ? fixedValue * (10n ** (decimal - 2n))
-    : fixedValue * (10n ** decimal);
+  const floatStr = value.toString();
+  if (!floatStr.includes('.')) {
+    return BigInt(value) * (10n ** decimal);
+  }
+  const decimalPlaces = floatStr.split('.')[1].length;
+  return BigInt(value) * (10n ** (decimal - BigInt(decimalPlaces)))
 }
 
 export function pickIndexEndpoint(chain) {
