@@ -191,8 +191,8 @@ async function handle(options) {
       break;
   }
 
-  const ensureLock = arg.option('write-lock');
-  await ensureLock(ensureLockOptions, ensureLock === undefined);
+  const writeLock = arg.option('write-lock');
+  await ensureLock(ensureLockOptions, writeLock === undefined);
   console.log(chalk.green(`the bridge ${_identifyRegisterName(register)} registered`));
 }
 
