@@ -9,6 +9,7 @@ const cachedNonce = {};
 
 export async function init(options) {
   const {register, lifecycle, signer} = options;
+  if (!lifecycle.accepted) return;
   if (!register.safeWalletAddress && !register.sourceSafeWalletAddress && !register.targetSafeWalletAddress) {
     return;
   }
@@ -21,7 +22,7 @@ export async function init(options) {
         register,
         chain: lifecycle.sourceChain,
         safeWalletUrl: register.sourceSafeWalletUrl,
-        safeWalletAddress: register.safeWalletAddress ?? register.sourceSafeWalletAddress,
+        safeWalletAddress: register.sourceSafeWalletAddress ?? register.safeWalletAddress,
         signer,
       });
       cachedSafe[lifecycle.sourceChain.code] = safe;
@@ -40,7 +41,7 @@ export async function init(options) {
         register,
         chain: lifecycle.targetChain,
         safeWalletUrl: register.targetSafeWalletUrl,
-        safeWalletAddress: register.safeWalletAddress ?? register.targetSafeWalletAddress,
+        safeWalletAddress: register.targetSafeWalletAddress ?? register.safeWalletAddress,
         signer,
       });
       cachedSafe[lifecycle.targetChain.code] = safe;

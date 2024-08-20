@@ -102,9 +102,11 @@ async function registerWithCall(options, callOptions) {
       lifecycle.targetToken.address,
     ]);
     await $`echo cast send ${approveFlags}`;
-    approveFlags.unshift(`--private-key=${signer}`);
-    const txApprove = await $`cast send ${approveFlags}`.quiet();
-    console.log(txApprove.stdout);
+    if (lifecycle.accepted) {
+      approveFlags.unshift(`--private-key=${signer}`);
+      const txApprove = await $`cast send ${approveFlags}`.quiet();
+      console.log(txApprove.stdout);
+    }
   }
 
   const depositFlagsValue = lifecycle.targetToken.type === 'native'
@@ -117,9 +119,11 @@ async function registerWithCall(options, callOptions) {
       ` --value=${depositFlagsValue}`,
     ]);
     await $`echo cast send ${depositFlags}`;
-    depositFlags.unshift(`--private-key=${signer}`);
-    const txDeposit = await $`cast send ${depositFlags}`.quiet();
-    console.log(txDeposit.stdout);
+    if (lifecycle.accepted) {
+      depositFlags.unshift(`--private-key=${signer}`);
+      const txDeposit = await $`cast send ${depositFlags}`.quiet();
+      console.log(txDeposit.stdout);
+    }
   }
 
   if (withdrawFlags.length) {
@@ -128,10 +132,12 @@ async function registerWithCall(options, callOptions) {
       lifecycle.contractAddress,
     ]);
     await $`echo cast send ${withdrawFlags}`;
-    withdrawFlags.unshift(`--private-key=${signer}`);
-    const txWithdraw = await $`cast send ${withdrawFlags}`.quiet();
-    await $`cast calldata ${withdrawFlags}`;
-    console.log(txWithdraw.stdout);
+    if (lifecycle.accepted) {
+      withdrawFlags.unshift(`--private-key=${signer}`);
+      const txWithdraw = await $`cast send ${withdrawFlags}`.quiet();
+      await $`cast calldata ${withdrawFlags}`;
+      console.log(txWithdraw.stdout);
+    }
   }
 
   setFeeFlags.unshift(...[
@@ -139,9 +145,11 @@ async function registerWithCall(options, callOptions) {
     lifecycle.contractAddress,
   ]);
   await $`echo cast send ${setFeeFlags}`;
-  setFeeFlags.unshift(`--private-key=${signer}`);
-  const txSetFee = await $`cast send ${setFeeFlags}`.quiet();
-  console.log(txSetFee.stdout);
+  if (lifecycle.accepted) {
+    setFeeFlags.unshift(`--private-key=${signer}`);
+    const txSetFee = await $`cast send ${setFeeFlags}`.quiet();
+    console.log(txSetFee.stdout);
+  }
 }
 
 async function registerWithSafe(options, callOptions) {
@@ -176,22 +184,27 @@ async function registerWithSafe(options, callOptions) {
     });
   }
 
-  console.log(p0Transactions);
+  const targetSafeWalletAddress = register.targetSafeWalletAddress ?? register.safeWalletAddress;
   if (p0Transactions.length) {
-    const p0 = await safe.propose({
-      definition,
-      safeSdk: targetSafeSdk,
-      safeService: targetSafeService,
-      safeAddress: register.targetSafeWalletAddress ?? register.safeWalletAddress,
-      senderAddress: signerAddress,
-      transactions: p0Transactions,
-    });
-    console.log(
-      chalk.green('proposed deposit transaction to'),
-      `${lifecycle.targetChain.code}: ${register.safeWalletAddress ?? register.targetSafeWalletAddress} (safe)`
-    );
-    if (p0 && arg.isDebug()) {
-      console.log(p0);
+    if (lifecycle.accepted) {
+      const p0 = await safe.propose({
+        definition,
+        safeSdk: targetSafeSdk,
+        safeService: targetSafeService,
+        safeAddress: targetSafeWalletAddress,
+        senderAddress: signerAddress,
+        transactions: p0Transactions,
+      });
+      console.log(
+        chalk.green('proposed deposit transaction to'),
+        `${lifecycle.targetChain.code}: ${targetSafeWalletAddress} (safe)`
+      );
+      if (p0 && arg.isDebug()) {
+        console.log(p0);
+      }
+    } else {
+      console.log(`call safe: [${targetSafeWalletAddress}] ${register.targetSafeWalletUrl}`);
+      console.log(p0Transactions);
     }
   }
 
@@ -211,20 +224,26 @@ async function registerWithSafe(options, callOptions) {
     });
   }
 
-  const p1 = await safe.propose({
-    definition,
-    safeSdk: sourceSafeSdk,
-    safeService: sourceSafeService,
-    safeAddress: register.sourceSafeWalletAddress ?? register.safeWalletAddress,
-    senderAddress: signerAddress,
-    transactions: p1Transactions,
-  });
-  console.log(
-    chalk.green('proposed register transaction to'),
-    `${lifecycle.sourceChain.code}: ${register.safeWalletAddress ?? register.sourceSafeWalletAddress} (safe)`
-  );
-  if (p1 && arg.isDebug()) {
-    console.log(p1);
+  const sourceSafeWalletAddress = register.sourceSafeWalletAddress ?? register.safeWalletAddress;
+  if (lifecycle.accepted) {
+    const p1 = await safe.propose({
+      definition,
+      safeSdk: sourceSafeSdk,
+      safeService: sourceSafeService,
+      safeAddress: sourceSafeWalletAddress,
+      senderAddress: signerAddress,
+      transactions: p1Transactions,
+    });
+    console.log(
+      chalk.green('proposed register transaction to'),
+      `${lifecycle.sourceChain.code}: ${sourceSafeWalletAddress} (safe)`
+    );
+    if (p1 && arg.isDebug()) {
+      console.log(p1);
+    }
+  } else {
+    console.log(`call safe: [${sourceSafeWalletAddress}] ${register.sourceSafeWalletUrl}`);
+    console.log(p1Transactions);
   }
 }
 

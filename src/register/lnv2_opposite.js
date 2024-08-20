@@ -81,9 +81,11 @@ async function registerWithCall(options, callOptions) {
       lifecycle.sourceToken.address,
     ]);
     await $`echo cast send ${approveFlags}`;
-    approveFlags.unshift(`--private-key=${signer}`);
-    const txApprove = await $`cast send ${approveFlags}`.quiet();
-    console.log(txApprove.stdout);
+    if (lifecycle.accepted) {
+      approveFlags.unshift(`--private-key=${signer}`);
+      const txApprove = await $`cast send ${approveFlags}`.quiet();
+      console.log(txApprove.stdout);
+    }
   }
 
   const setFeeFlagsValue = lifecycle.sourceToken.type === 'native'
@@ -95,9 +97,11 @@ async function registerWithCall(options, callOptions) {
     `--value=${setFeeFlagsValue}`,
   ]);
   await $`echo cast send ${setFeeFlags}`;
-  setFeeFlags.unshift(`--private-key=${signer}`);
-  const txSetFee = await $`cast send ${setFeeFlags}`.quiet();
-  console.log(txSetFee.stdout);
+  if (lifecycle.accepted) {
+    setFeeFlags.unshift(`--private-key=${signer}`);
+    const txSetFee = await $`cast send ${setFeeFlags}`.quiet();
+    console.log(txSetFee.stdout);
+  }
 }
 
 async function registerWithSafe(options, callOptions) {
@@ -130,17 +134,23 @@ async function registerWithSafe(options, callOptions) {
     data: txSetFee.stdout.trim(),
   });
 
+  const safeWalletAddress = register.sourceSafeWalletAddress ?? register.safeWalletAddress;
+  if (!lifecycle.accepted) {
+    console.log(`call safe: [${safeWalletAddress}] ${register.sourceSafeWalletUrl}`);
+    console.log(p0Transactions);
+    return;
+  }
   const p1 = await safe.propose({
     definition,
     safeSdk: sourceSafeSdk,
     safeService: sourceSafeService,
-    safeAddress: register.sourceSafeWalletAddress ?? register.safeWalletAddress,
+    safeAddress: safeWalletAddress,
     senderAddress: signerAddress,
     transactions: p0Transactions,
   });
   console.log(
     chalk.green('proposed register transaction to'),
-    `${lifecycle.sourceChain.code}: ${register.safeWalletAddress ?? register.sourceSafeWalletAddress} (safe)`
+    `${lifecycle.sourceChain.code}: ${safeWalletAddress} (safe)`
   );
   if (p1 && arg.isDebug()) {
     console.log(p1);

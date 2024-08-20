@@ -157,7 +157,9 @@ async function handle(options) {
     process.exit(1);
   }
 
+  const accepted = arg.option('accept');
   options.lifecycle = {
+    accepted,
     sourceChain,
     targetChain,
     sourceToken,
@@ -176,23 +178,20 @@ async function handle(options) {
     return;
   }
 
-  const accepted = arg.option('accept');
-  if (accepted) {
-    await safe.init(options);
-    switch (register.type) {
-      case 'lnv3':
-        await lnv3.register(options);
-        break;
-      case 'lnv2-default':
-        await lnv2Default.register(options);
-        break;
-      case 'lnv2-opposite':
-        await lnv2Opposite.register(options);
-        break;
-    }
+  await safe.init(options);
+  switch (register.type) {
+    case 'lnv3':
+      await lnv3.register(options);
+      break;
+    case 'lnv2-default':
+      await lnv2Default.register(options);
+      break;
+    case 'lnv2-opposite':
+      await lnv2Opposite.register(options);
+      break;
   }
 
-  await ensureLock(ensureLockOptions, true);
+  await ensureLock(ensureLockOptions, accepted);
   console.log(chalk.green(`the bridge ${_identifyRegisterName(register)} registered`));
 }
 

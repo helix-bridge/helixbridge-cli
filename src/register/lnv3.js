@@ -116,9 +116,11 @@ async function registerWithCall(options, callOptions) {
       `--value=${depositFlagsValue}`,
     ]);
     await $`echo cast send ${depositFlags}`
-    depositFlags.unshift(`--private-key=${signer}`);
-    const txDeposit = await $`cast send ${depositFlags}`.quiet();
-    console.log(txDeposit.stdout);
+    if (lifecycle.accepted) {
+      depositFlags.unshift(`--private-key=${signer}`);
+      const txDeposit = await $`cast send ${depositFlags}`.quiet();
+      console.log(txDeposit.stdout);
+    }
   }
   if (withdrawFlags.length) {
     withdrawFlags.unshift(...[
@@ -126,9 +128,11 @@ async function registerWithCall(options, callOptions) {
       lifecycle.contractAddress,
     ]);
     await $`echo cast send ${withdrawFlags}`
-    withdrawFlags.unshift(`--private-key=${signer}`);
-    const txWithdraw = await $`cast send ${withdrawFlags}`.quiet();
-    console.log(txWithdraw.stdout);
+    if (lifecycle.accepted) {
+      withdrawFlags.unshift(`--private-key=${signer}`);
+      const txWithdraw = await $`cast send ${withdrawFlags}`.quiet();
+      console.log(txWithdraw.stdout);
+    }
   }
 }
 
@@ -175,17 +179,23 @@ async function registerWithSafe(options, callOptions) {
     });
   }
 
+  const safeWalletAddress = register.sourceSafeWalletAddress ?? register.safeWalletAddress;
+  if (!lifecycle.accepted) {
+    console.log(`call safe: [${safeWalletAddress}] ${register.sourceSafeWalletUrl}`);
+    console.log(transactions);
+    return;
+  }
   const p0 = await safe.propose({
     definition,
     safeSdk: sourceSafeSdk,
     safeService: sourceSafeService,
-    safeAddress: register.sourceSafeWalletAddress ?? register.safeWalletAddress,
+    safeAddress: safeWalletAddress,
     senderAddress: signerAddress,
     transactions,
   });
   console.log(
     chalk.green('proposed register transaction to'),
-    `${lifecycle.sourceChain.code}: ${register.safeWalletAddress ?? register.sourceSafeWalletAddress} (safe)`
+    `${lifecycle.sourceChain.code}: ${safeWalletAddress} (safe)`
   );
   if (p0 && arg.isDebug()) {
     console.log(p0);
