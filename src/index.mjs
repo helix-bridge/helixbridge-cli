@@ -16,6 +16,7 @@ helixbridge
                         --group=mainnet
                         --datadir=/path/to/config
                         --accept
+                        --write-lock
 
   encrypt             encrypt a private key
                       helixbridge encrypt
