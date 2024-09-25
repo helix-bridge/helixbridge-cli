@@ -1,4 +1,5 @@
 import * as arg from "../ecosys/arg.js";
+import {HelixChain} from "@helixbridge/helixconf";
 
 
 export async function check() {
@@ -26,12 +27,12 @@ export async function generate(options) {
 }
 
 async function generateWithGroup(options, group) {
-  const bridgeConfigRaw = await fs.readFile(arg.datapath(`/bridges.${group}.yml`), 'utf8');
+  const bridgeConfigRaw = await fs.readFile(arg.datapath(`/src/bridges.${group}.yml`), 'utf8');
   const bridgeConfig = YAML.parse(bridgeConfigRaw);
   const configure = bridgeConfig.configure;
   await refactorConfig({configure, group});
 
-  const CONFIGURE_PATH = arg.datapath('/configure');
+  const CONFIGURE_PATH = arg.datapath('/outputs/configure');
   const storeFile = `${CONFIGURE_PATH}/configure.${group}.json`;
   await $`mkdir -p ${CONFIGURE_PATH}`.quiet();
 
@@ -41,7 +42,7 @@ async function generateWithGroup(options, group) {
   };
 
   await _fillEncryptedPrivateKey(fillOptions);
-  await _fillRpcnodes(fillOptions);
+  // await _fillRpcnodes(fillOptions);
 
   const outputJson = JSON.stringify(configure, null, 2);
   await fs.writeFile(storeFile, outputJson);
@@ -71,12 +72,12 @@ async function refactorConfig(options) {
       includeFileContent = await fs.readFile(include, 'utf8');
     }
     // check path from datapath
-    const pathOfIncludeFromDataPath = arg.datapath(include);
+    const pathOfIncludeFromDataPath = arg.datapath(`/src/${include}`);
     if (fs.existsSync(pathOfIncludeFromDataPath)) {
       includeFileContent = await fs.readFile(pathOfIncludeFromDataPath, 'utf8');
     }
     // check group file
-    const pathOfGroupInclude = arg.datapath(`/includes/${group}/configures/${include}`);
+    const pathOfGroupInclude = arg.datapath(`/src/includes/${group}/bridges/${include}`);
     if (fs.existsSync(pathOfGroupInclude)) {
       includeFileContent = await fs.readFile(pathOfGroupInclude, 'utf8');
     }
@@ -97,6 +98,47 @@ async function refactorConfig(options) {
     nbdgs.push(...includeConfigs);
   }
   configure.bridges = nbdgs;
+
+
+  const nrnds = [];
+  for (const rpcnode of configure.rpcnodes) {
+    const include = rpcnode.include;
+    if (!include) {
+      nrnds.push(rpcnode);
+      continue;
+    }
+    const keys = Object.keys(rpcnode);
+    if (keys.length > 1) {
+      throw new Error(`include mode please do not add other fields: [${keys.join(', ')}]`)
+    }
+
+    let includeFileContent;
+    if (fs.existsSync(include)) {
+      includeFileContent = await fs.readFile(include, 'utf8');
+    }
+    // check path from datapath
+    const pathOfIncludeFromDataPath = arg.datapath(`/src/${include}`);
+    if (fs.existsSync(pathOfIncludeFromDataPath)) {
+      includeFileContent = await fs.readFile(pathOfIncludeFromDataPath, 'utf8');
+    }
+    // check group file
+    const pathOfGroupInclude = arg.datapath(`/src/includes/${group}/nodes/${include}`);
+    if (fs.existsSync(pathOfGroupInclude)) {
+      includeFileContent = await fs.readFile(pathOfGroupInclude, 'utf8');
+    }
+    if (!includeFileContent) {
+      throw new Error(`include file ${include} not found, please check your path`);
+    }
+    const includeConfigs = YAML.parse(includeFileContent);
+    if (!includeConfigs) {
+      continue;
+    }
+    if (configure.rpcnodes.findIndex(item => item.name === includeConfigs.name) > -1) {
+      throw new Error(`duplicated node {name: ${includeConfigs.name}}`);
+    }
+    nrnds.push(includeConfigs);
+  }
+  configure.rpcnodes = nrnds;
 }
 
 async function _fillEncryptedPrivateKey(options) {
@@ -110,28 +152,30 @@ async function _fillEncryptedPrivateKey(options) {
   }
 }
 
-async function _fillRpcnodes(options) {
-  const {configure, definition} = options;
-  const customRpcNodes = configure.rpcnodes ?? [];
-  const bridges = configure.bridges;
-  for (const bridge of bridges) {
-    const [sourceChainName, targetChainName] = bridge.direction.split('->');
-    const sourceChainRpc = definition.rpc[sourceChainName];
-    const targetChainRpc = definition.rpc[targetChainName];
-    __updateRpcnodesRpc(customRpcNodes, {name: sourceChainName, rpc: sourceChainRpc});
-    __updateRpcnodesRpc(customRpcNodes, {name: targetChainName, rpc: targetChainRpc});
-  }
-  configure.rpcnodes = customRpcNodes;
-}
-
-function __updateRpcnodesRpc(rpcnodes, detected = {name, rpc}) {
-  for (const rpcnode of rpcnodes) {
-    if (rpcnode.name !== detected.name) {
-      continue;
-    }
-    if (rpcnode.rpc) return;
-    rpcnode.rpc = detected.rpc;
-    return;
-  }
-  rpcnodes.push(detected);
-}
+// async function _fillRpcnodes(options) {
+//   const {configure, definition} = options;
+//   const customRpcNodes = configure.rpcnodes ?? [];
+//   const bridges = configure.bridges;
+//   for (const bridge of bridges) {
+//     const [sourceChainName, targetChainName] = bridge.direction.split('->');
+//     const [sourceChain, targetChain] = [
+//       HelixChain.get(sourceChainName),
+//       HelixChain.get(targetChainName),
+//     ];
+//     __updateRpcnodesRpc(customRpcNodes, {name: sourceChainName, rpc: sourceChain.rpc});
+//     __updateRpcnodesRpc(customRpcNodes, {name: targetChainName, rpc: targetChain.rpc});
+//   }
+//   configure.rpcnodes = customRpcNodes;
+// }
+//
+// function __updateRpcnodesRpc(rpcnodes, detected = {name, rpc}) {
+//   for (const rpcnode of rpcnodes) {
+//     if (rpcnode.name !== detected.name) {
+//       continue;
+//     }
+//     if (rpcnode.rpc) return;
+//     rpcnode.rpc = detected.rpc;
+//     return;
+//   }
+//   rpcnodes.push(detected);
+// }

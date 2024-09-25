@@ -1,5 +1,6 @@
-import {ethers} from "ethers";
-import Safe, {EthersAdapter} from "@safe-global/protocol-kit";
+// import {ethers} from "ethers";
+import Safe from "@safe-global/protocol-kit";
+// import {EthersAdapter} from "@safe-global/protocol-kit";
 import SafeApiKit from "@safe-global/api-kit";
 
 
@@ -8,76 +9,75 @@ const cachedNonce = {};
 
 export async function init(options) {
   const {register, lifecycle, signer} = options;
+  if (!lifecycle.accepted) return;
   if (!register.safeWalletAddress && !register.sourceSafeWalletAddress && !register.targetSafeWalletAddress) {
     return;
   }
   if (register.sourceSafeWalletUrl) {
     let safe;
-    if (cachedSafe[lifecycle.sourceChainName]) {
-      safe = cachedSafe[lifecycle.sourceChainName];
+    if (cachedSafe[lifecycle.sourceChain.code]) {
+      safe = cachedSafe[lifecycle.sourceChain.code];
     } else {
       safe = await initSafe({
         register,
-        chainRpc: lifecycle.sourceChainRpc,
+        chain: lifecycle.sourceChain,
         safeWalletUrl: register.sourceSafeWalletUrl,
-        safeWalletAddress: register.safeWalletAddress ?? register.sourceSafeWalletAddress,
+        safeWalletAddress: register.sourceSafeWalletAddress ?? register.safeWalletAddress,
         signer,
       });
-      cachedSafe[lifecycle.sourceChainName] = safe;
+      cachedSafe[lifecycle.sourceChain.code] = safe;
     }
 
     options.sourceSafeSdk = safe.safeSdk;
     options.sourceSafeService = safe.safeService;
-    options.sourceProvider = safe.provider;
-    options.sourceNetwork = safe.network;
-    options.sourceSigner = safe.wallet;
+    // options.sourceSigner = safe.wallet;
   }
   if (register.targetSafeWalletUrl) {
     let safe;
-    if (cachedSafe[lifecycle.targetChainName]) {
-      safe = cachedSafe[lifecycle.targetChainName];
+    if (cachedSafe[lifecycle.targetChain.code]) {
+      safe = cachedSafe[lifecycle.targetChain.code];
     } else {
       safe = await initSafe({
         register,
-        chainRpc: lifecycle.targetChainRpc,
+        chain: lifecycle.targetChain,
         safeWalletUrl: register.targetSafeWalletUrl,
-        safeWalletAddress: register.safeWalletAddress ?? register.targetSafeWalletAddress,
+        safeWalletAddress: register.targetSafeWalletAddress ?? register.safeWalletAddress,
         signer,
       });
-      cachedSafe[lifecycle.targetChainName] = safe;
+      cachedSafe[lifecycle.targetChain.code] = safe;
     }
 
     options.targetSafeSdk = safe.safeSdk;
     options.targetSafeService = safe.safeService;
-    options.targetProvider = safe.provider;
-    options.targetNetwork = safe.network;
-    options.targetSigner = safe.wallet;
+    // options.targetSigner = safe.wallet;
   }
 }
 
 async function initSafe(options) {
-  const {chainRpc, signer, safeWalletUrl, safeWalletAddress} = options;
-  const provider = new ethers.JsonRpcProvider(chainRpc);
-  const wallet = new ethers.Wallet(signer, provider);
-  const ethAdapter = new EthersAdapter({
-    ethers,
-    signerOrProvider: wallet,
+  const {chain, signer, safeWalletUrl, safeWalletAddress} = options;
+  const safeSdk = await Safe.default.init({
+    provider: chain.rpc,
+    signer,
+    safeAddress: safeWalletAddress,
   });
-  const safeSdk = await Safe.default.create({ethAdapter: ethAdapter, safeAddress: safeWalletAddress});
 
-  const network = await provider.getNetwork();
-  console.log(`init safe for chain ${network.chainId} with ${safeWalletUrl}`);
-  const safeService = new SafeApiKit.default({
-    chainId: network.chainId,
+  // const provider = new ethers.JsonRpcProvider(chain.rpc);
+  // const wallet = new ethers.Wallet(signer, provider);
+  // const ethAdapter = new EthersAdapter({
+  //   ethers,
+  //   signerOrProvider: wallet,
+  // });
+  // const safeSdk = await Safe.default.create({ethAdapter: ethAdapter, safeAddress: safeWalletAddress});
+
+  console.log(`init safe for chain ${chain.id} with ${safeWalletUrl}`);
+  const safeService =  new SafeApiKit.default({
+    chainId: chain.id,
     txServiceUrl: safeWalletUrl,
     // txServiceUrl: 'https://httpbin.org/anything',
   });
   return {
     safeSdk,
     safeService,
-    provider,
-    network,
-    wallet,
   };
 }
 
@@ -97,7 +97,10 @@ export async function propose(options = {definition, safeSdk, safeService, trans
     nonce = remoteNonce;
   }
 
-  let createTransactionOptions = {nonce};
+  let createTransactionOptions = {
+    safeTxGas: 0,
+    nonce,
+  };
   if (safepin) {
     createTransactionOptions = {...createTransactionOptions, ...safepin};
   }

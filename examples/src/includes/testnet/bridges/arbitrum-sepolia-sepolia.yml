@@ -1,0 +1,11 @@
+- direction: arbitrum-sepolia->sepolia
+  feeLimit: 100
+  reorgThreshold: 10
+  bridgeType: lnv3
+  safeWalletAddress: '0x086962e147c82C037872fa87523faa139D38ee61'
+  safeWalletUrl: 'https://safe-transaction-sepolia.safe.global/api'
+  encryptedPrivateKey: aabbccddee
+  tokens:
+    - symbol: usdc->usdc
+      swapRate: 2000
+      withdrawLiquidityCountThreshold: 10
