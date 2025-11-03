@@ -38,11 +38,11 @@ export async function register(options) {
       ]);
     } else {
       //# not open now
-      // withdrawFlags.push(...[
-      //   'withdrawPenaltyReserve(address,uint256)()',
-      //   lifecycle.sourceToken.address,
-      //   -sourceDeposit
-      // ]);
+      withdrawFlags.push(...[
+        'withdrawPenaltyReserve(address,uint256)()',
+        lifecycle.sourceToken.address,
+        -sourceDeposit
+      ]);
     }
   }
 
