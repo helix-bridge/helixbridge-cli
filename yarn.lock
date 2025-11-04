@@ -12,10 +12,10 @@
   resolved "https://registry.yarnpkg.com/@adraffy/ens-normalize/-/ens-normalize-1.11.0.tgz#42cc67c5baa407ac25059fcd7d405cc5ecdb0c33"
   integrity sha512-/3DDPKHqqIqxUULp8yP4zODUY1i+2xvVWsv8A79xGWdCAG+8sb0hRh0Rk2QyOJUnnbyPUAZYcpBuRe3nS2OIUg==
 
-"@helixbridge/helixconf@^1.2.1":
-  version "1.2.1"
-  resolved "https://registry.yarnpkg.com/@helixbridge/helixconf/-/helixconf-1.2.1.tgz#a8e2de100c3b6c86b6b3c74ffc08d4114ebf55c3"
-  integrity sha512-2/f5YWCB+szjLQk0Y4mBuSBhanCjnOn9Md5T9NQ6XxiajigVzckLUIAV8+GSeNQsmWUTYP9AUat4yhOv5qnLgg==
+"@helixbridge/helixconf@^1.2.8":
+  version "1.2.8"
+  resolved "https://registry.yarnpkg.com/@helixbridge/helixconf/-/helixconf-1.2.8.tgz#cee9e6da1f7825f23225652734e07af44d488dd2"
+  integrity sha512-ro8aMyDC4tVvGgZoTTWcXAPdbQgmFbGM/qDIM067vKWau+4z3fB5gUDeAmm21r/oRP9WqR/zz2FJ8V9wABsEnQ==
 
 "@noble/curves@1.2.0":
   version "1.2.0"
