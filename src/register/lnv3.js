@@ -45,6 +45,7 @@ export async function register(options) {
       ]);
     }
   }
+  console.log('sourceDeposit:', sourceDeposit)
 
   const approvalFlags = [
     'approve(address,uint256)(bool)',
