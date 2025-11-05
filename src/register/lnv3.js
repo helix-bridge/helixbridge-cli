@@ -182,9 +182,9 @@ async function registerWithSafe(options, callOptions) {
   const safeWalletAddress = register.sourceSafeWalletAddress ?? register.safeWalletAddress;
   if (!lifecycle.accepted) {
     console.log(`call safe: [${safeWalletAddress}] ${register.sourceSafeWalletUrl}`);
-    console.log(transactions);
     return;
   }
+  console.log(transactions);
   const p0 = await safe.propose({
     definition,
     safeSdk: sourceSafeSdk,
