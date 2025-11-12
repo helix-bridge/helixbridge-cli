@@ -38,13 +38,14 @@ export async function register(options) {
       ]);
     } else {
       //# not open now
-      // withdrawFlags.push(...[
-      //   'withdrawPenaltyReserve(address,uint256)()',
-      //   lifecycle.sourceToken.address,
-      //   -sourceDeposit
-      // ]);
+      withdrawFlags.push(...[
+        'withdrawPenaltyReserve(address,uint256)()',
+        lifecycle.sourceToken.address,
+        -sourceDeposit
+      ]);
     }
   }
+  console.log('sourceDeposit:', sourceDeposit)
 
   const approvalFlags = [
     'approve(address,uint256)(bool)',
@@ -182,9 +183,9 @@ async function registerWithSafe(options, callOptions) {
   const safeWalletAddress = register.sourceSafeWalletAddress ?? register.safeWalletAddress;
   if (!lifecycle.accepted) {
     console.log(`call safe: [${safeWalletAddress}] ${register.sourceSafeWalletUrl}`);
-    console.log(transactions);
     return;
   }
+  console.log(transactions);
   const p0 = await safe.propose({
     definition,
     safeSdk: sourceSafeSdk,

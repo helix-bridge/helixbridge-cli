@@ -1,13 +1,13 @@
-FROM ghcr.io/foundry-rs/foundry:nightly as foundry
+FROM ghcr.io/foundry-rs/foundry:nightly AS foundry
 
-FROM node:21-alpine
+FROM node:21-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/*
 
 COPY --from=foundry /usr/local/bin/cast /usr/local/bin/
 
 COPY . /app
-RUN apk update \
-    && apk add bash \
-    && npm config set update-notifier false \
+RUN npm config set update-notifier false \
     && npm i -g zx \
     && cd /app \
     && npm i

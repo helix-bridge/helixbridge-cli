@@ -7,7 +7,7 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "@helixbridge/helixconf": "^1.2.1",
+    "@helixbridge/helixconf": "^1.2.8",
     "@safe-global/api-kit": "^2.5.5",
     "@safe-global/protocol-kit": "^5.1.0",
     "ethers": "^6.13.4"
